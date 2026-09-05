@@ -62,7 +62,6 @@ npm run dev
 git rm -r --cached frontend/node_modules
 git commit -m "chore: remove node_modules from git tracking"
 ```
-```
 
 ---
 
