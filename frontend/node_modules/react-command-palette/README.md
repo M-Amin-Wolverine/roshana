@@ -1,0 +1,317 @@
+# React Command Palette
+
+WAI-ARIA compliant React command palette like the one in Atom and Sublime
+
+[![CI](https://github.com/asabaylus/react-command-palette/workflows/CI/badge.svg)](https://github.com/asabaylus/react-command-palette/actions)
+[![codecov](https://codecov.io/gh/asabaylus/react-command-palette/branch/master/graph/badge.svg)](https://codecov.io/gh/asabaylus/react-command-palette)
+![npm](https://img.shields.io/npm/v/react-command-palette.svg)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/asabaylus/react-command-palette.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/asabaylus/react-command-palette/context:javascript)
+[![react-command-palette](https://snyk.io/advisor/npm-package/react-command-palette/badge.svg)](https://snyk.io/advisor/npm-package/react-command-palette)
+
+[![Screenshot](https://www.dropbox.com/s/7dogg4v7vfkzvgs/react-command-palette.gif?raw=1)](https://www.dropbox.com/s/7dogg4v7vfkzvgs/react-command-palette.gif?raw=1)
+
+## Live Playground
+
+For examples of the command palette in action, go to the 
+
+[![Storybook](https://github.com/storybooks/brand/raw/master/badge/badge-storybook.svg?sanitize=true)](https://react-command-palette.js.org)
+
+OR
+
+To run that demo on your own computer:
+* Clone this repository
+* `npm install`
+* `npm run storybook`
+* Visit http://localhost:6006/
+
+## Usage
+
+Install it in your project
+
+```
+$ npm i --save react-command-palette
+```
+
+Import into your react app and pass commands
+
+```jsx
+import { createRoot } from 'react-dom/client';
+import CommandPalette from 'react-command-palette';
+
+const commands = [{
+    name: "Foo",
+    command() {}
+  },{
+    name: "Bar",
+    command() {}
+  }
+  ... 
+ ];
+ 
+ const container = document.getElementById('app');
+ const root = createRoot(container);
+ root.render(<CommandPalette commands={commands} />)
+```
+
+## Props
+
+* ```open``` a _boolean_, when set to true it forces the command palette to be displayed. Defaults to "false".
+
+* ```alwaysRenderCommands``` a boolean, Set it to true if you'd like to render suggestions even when the input is not focused.
+
+* ```display``` one of "modal" or "inline", when set to "modal" the command palette is rendered centered inside a modal. When set to "inline", it is render inline with other page content. Defaults to "modal".
+
+* ```header``` a _string_ or a _React.ComponentType_ which provides a helpful description for the usage of the command palette. The component is displayed at the top of the command palette. The header is not displayed by default. see: src/examples/sampleInstruction.js for reference.
+
+* ```closeOnSelect``` a _boolean_, when set to true the command palette will close immediately when the user makes a selection. Defaults to "false".
+
+* ```resetInputOnOpen``` a _boolean_ which indicates whether to reset the user's query to `defaultInputValue` when the command palette opens. Defaults to "false".
+ 
+* ```resetCommandsOnOpen``` a _boolean_ which resets the components commands to the initial data provided to `props.commands` every time the command palette is opened.
+
+* ```placeholder``` a _string_ that contains a short text description which is displayed inside the the input field until the user provides input. Defaults to "Type a command".
+
+* ```hotKeys``` a _string_ or _array of strings_ that contain a keyboard shortcut for opening/closing the palette. Defaults to "_command+shift+p_". Uses [mousetrap key combos](https://craig.is/killing/mice)
+
+* ```defaultInputValue``` a _string_ that determines the value of the text in the input field. By default the defaultInputValue is an empty string.
+
+* ```getSuggestionValue``` a _function_, when suggestion is clicked, react-autosuggest needs to populate the input element based on the clicked suggestion. Teach react-autosuggest how to calculate the input value for every given suggestion. By default the highlighed suggestion will be displayed
+
+* ```highlightFirstSuggestion```  a _boolean_, will automatically highlight the first suggestion. Defaults to "true". */
+
+* ```options``` options controls how fuzzy search is configured. Note: use at your own risk, this is likely to change in the future. The search options are derived from these [fuzzysort options](https://github.com/farzher/fuzzysort#options). However the command palette options prop must have the following values included to function correctly:
+
+  ```js
+    key: "name", // default is "name"
+    keys: ["name"], // default is "name"
+
+    // other options may be freely configured
+    threshold: -Infinity, 
+    limit: 7,
+    allowTypo: true, 
+    scoreFn: null 
+  ```
+
+* ```filterSearchQuery``` a _function_ that filters searched input. If this prop is not used the default behavior will search using the input exactly as it was entered by the user. Otherwise whatever gets returned by your function is the text that will be searched. You might use this filter out extraneous characters such as ">" or "?" like VS Code does for _action_ keys, ex:
+  ```js
+    <CommandPalette
+      commands={commands}
+      placeholder="Try typing '?st', '>st' or 'st'"
+      defaultInputValue=">"
+      filterSearchQuery={ inputValue => {
+        // strip action keys "? or >" from input before searching commands, ex:
+        // "?something" or ">something" should search using "something" as the query
+        return inputValue.replace(/^(>|\?)/g, '');
+      }}
+      open
+    />
+  ```
+
+* ```onChange``` a _function_ that's called when the input value changes. It returns two values: the current value of the input field followed by the users typed input. The query ignores keyboard navigation and clicks.
+
+  ```js
+    <CommandPalette
+      commands={commands}
+      onChange={(inputValue, userQuery) => {
+        alert(`The input was changed to:\n
+        ${inputValue}\n
+        \n
+        The user typed:\n
+        ${userQuery}
+        `);
+      }}
+    />
+  ```
+
+* ```onHighlight``` a function that's called when the highlighted suggestion changes. 
+
+  ```js
+    <CommandPalette
+      commands={commands}
+      onHighlight={suggestion => {
+        console.log(`A suggested command was highlighted: \n
+        ${JSON.stringify(suggestion)}
+        `);
+      }}
+    />
+  ```
+
+* ```onSelect``` a function that's called when the selected suggestion changes, given the user selects an item or the user clear the selection. It's called with the item that was selected or null.
+
+  ```js
+    <CommandPalette
+      commands={commands}
+      onSelect={command => {
+        alert(`A suggested command was selected: \n
+        ${JSON.stringify(command)}
+        `);
+      }}
+    />
+  ```
+
+* ```onAfterOpen``` a function that fires after the command palette modal is opened.
+
+  ```js
+    <CommandPalette
+      commands={commands}
+      onAfterOpen={() => {
+        alert("The palette was opened.");
+      }}
+    />
+  ```
+
+* ```onRequestClose``` a function that will be run when the modal is requested to be closed (either by clicking on overlay or pressing ESC).
+Note: It is not called if _open_ is changed by other means. Passes through to the [react-modal prop](http://reactcommunity.org/react-modal/examples/on_request_close.html).
+
+  ```js
+    <CommandPalette
+      commands={commands}
+      onRequestClose={() => {
+        alert("The palette was closed.");
+      }}
+    />
+  ```
+
+* ```shouldReturnFocusAfterClose``` a boolean (default is _true_) indicate if the modal should restore focus to the element that had focus prior to its display. 
+
+* ```commands``` appears in the command palette. For each command in the array the object must have a _name_ and a _command_. The _name_ is a user friendly string that will be display to the user. The command is a function that will be executed when the user clicks or presses the enter key. Commands may also include custom properties where "this" will be bound to the command, for example:
+
+  ```js
+    {
+      id: 1,
+      color: 'pink',
+      name: "Foo",
+      command() {
+        document.location.href = `somepage.html?id=${this.id}&color=${this.color}`;
+      }
+    },
+    ...
+  ```
+
+* ```reactModalParentSelector``` a selector compatible with querySelector. By default, the modal portal will be appended to the document's body. You can choose a different parent element by selector. If you do this, please ensure that your app element is set correctly. The app element should not be a parent of the modal, to prevent modal content from being hidden to screenreaders while it is open.
+
+* ```renderCommand``` a _React.func_. By default, react-command-palette will render the suggestion.name_ for each command.  However, if passed a custom react component _renderCommand_ will display the command using any template you can imagine. The _renderCommand_ code signature follows the same coding pattern defined by react-autosuggest's  renderSuggestion property.
+
+  ```jsx
+  function RenderCommand(suggestion) {
+    // A suggestion object will be passed to your custom component for each command
+    const { id, color, name } = suggestion;
+    return (
+      <div>
+        <span>{id}</span>
+        <span>{color}</span>
+        <span>{name}</span>
+      </div>
+    );
+  }
+
+  const commands = [{
+      id: 1,
+      color: 'pink',
+      name: "Foo",
+      command() {
+        document.location.href = `somepage.html?id=${this.id}&color=${this.color}`;
+      }
+    } ...];
+
+  <CommandPalette
+    commands={commands}
+    renderCommand={RenderCommand}
+  />
+  ```
+  see: https://github.com/moroshko/react-autosuggest#rendersuggestion-required.
+ 
+  Note: the _suggestion.highlight_ will contain the rendered markup from [fuzzysort](farzher/fuzzysort#fuzzysorthighlightresult-openb-closeb), see the ```options``` prop. If the ```options``` prop contains an array of "keys" then then _suggestion.highlight_ will contain an array of matches, see: [fuzzysort advanced usage](https://github.com/farzher/fuzzysort#advanced-usage) or checkout the [sampleChromeCommand.js](src/examples/sampleChromeCommand.js)
+
+  *Important:* _renderCommand_ must be a pure function (react-autosuggest, upon which this is based will optimize rendering performance based on this assumption).
+
+* ```maxDisplayed``` a _number_ between 1 and 500 that determines the maximum number of commands that will be rendered on screen. Defaults to 7
+
+* ```spinner``` a _string_ or a _React.ComponentType_ that is displayed when the user selects an item. If a custom spinner is not set then the default spinner will be used. If a custom component or string is provided then it will automatically be wrapped inside a div with a _role="status"_ attribute. If a component is provided then it will be be wrapped in a div that also contains a sibling node with a div contain "Loading..." visible only to screen readers.
+
+* ```showSpinnerOnSelect``` a _boolean_ which displays a loading indicator immediately after a command has been selected. When true the spinner is enabled when false the spinner is disabled. Useful when dynamically loading lists of a commands based upon user selections. Setting both _showSpinnerOnSelect_ and  _closeOnSelect_ to false will keep the palette open and allow a new list of commands to be loaded, see the [dynamic lists example](https://codesandbox.io/s/react-command-palette-dynamic-lists-p2xo9?fontsize=14&hidenavigation=1&theme=dark).
+
+* ```theme``` enables you to apply a sample or custom look-n-feel.
+  Several themes are included with the command palette, Chrome, VS Code and Atom. The CommandPalette comes with the Atom theme enabled default.
+
+  Creating a new theme is also possible. There are four base components that should be styled, the _trigger_, _spinner_, _react-modal_ and _react-autosuggest_ components. All four can be styled at once via the `theme` prop.
+
+  There are two steps to styling. First create a theme object to map your custom class names to their associated components. Then add styles that use the rules mapped in the `theme` prop.
+
+  For example, to style the CommandPalette using CSS Modules, do:
+
+  ```css
+  /* theme.css */
+  .my-modal { ... }
+  .my-overlay { ... }
+  .my-container { ... }
+  .my-header { ... }
+  .my-input { ... }
+  ...
+  ```
+
+  ```jsx
+  /* my-component.js */
+  const theme = {
+    modal:         "my-modal",
+    overlay:       "my-overlay",
+    container:     "my-container",
+    header:        "my-header",
+    content:       "my-content",
+    input:         "my-input",
+    ...
+  }
+
+  import theme from 'theme.css';
+
+  <CommandPalette theme={theme} ... />
+  ```
+
+  When not specified, `theme` defaults to the included _Atom_ theme. Complete sample themes are provided, see: [Chrome](src/examples/sampleChromeTheme.md),[Sublime](src/examples/sampleSublimeTheme.md) and [Atom](src/examples/sampleAtomTheme.md)
+
+  The following picture illustrates how `theme` keys correspond to CommandPalette DOM structure:
+
+  ![DOM structure](./images/dom-structure.png)
+
+```trigger``` a _string_ or a _React.ComponentType_ the opens the command palette when clicked. If a custom trigger is not set then by default a button will be used. If a custom component or string is provided then it will automatically be wrapped inside an accessible div that will allow it be keyboard accessible, clickable and focusable for assistive technologies.
+
+Example with a component:
+```
+// jsx trigger prop
+<CommandPalette commands={data} trigger={<b>Click Me!</b>}>
+
+// html generated trigger
+<div role="button" tabindex="0"><b>Click Me!</b></div>
+```
+
+Example with a string:
+```
+// jsx trigger prop
+<CommandPalette commands={data} trigger="Click Me!">
+
+// html generated trigger
+<div role="button" tabindex="0">Click Me!</div>
+```
+
+When the trigger is clicked it will open the command palette, no custom handlers or events are required. Setting to `null` prevents the trigger from rendering. Useful when the command palette will be opened externally.
+
+## Developer Setup
+```
+# start the dev environment
+$ yarn start
+
+# install dependencies
+$ yarn install
+
+# visual regression tests
+$ yarn chromatic
+
+# run unit tests
+$ yarn test
+
+# update the docs
+$ yarn storybook
+```
+
+## Sponsors
+Visual Regression Tests by [ChromaticQA](https://www.chromaticqa.com/)

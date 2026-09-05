@@ -1,0 +1,37 @@
+{
+  "auth": {
+    "login": {
+      "title": "ورود به حساب",
+      "subtitle": "برای ادامه وارد حساب کاربری خود شوید",
+      "email": "ایمیل",
+      "password": "رمز عبور",
+      "rememberMe": "مرا به خاطر بسپار",
+      "forgotPassword": "فراموشی رمز عبور؟",
+      "submit": "ورود",
+      "loggingIn": "در حال ورود...",
+      "noAccount": "حساب کاربری ندارید؟",
+      "register": "ثبت‌نام کنید"
+    },
+    "register": {
+      "title": "ثبت‌نام",
+      "subtitle": "حساب کاربری جدید بسازید",
+      "firstName": "نام",
+      "lastName": "نام خانوادگی",
+      "email": "ایمیل",
+      "phone": "شماره تماس",
+      "password": "رمز عبور",
+      "confirmPassword": "تأیید رمز عبور",
+      "terms": "با قوانین موافقم",
+      "submit": "ثبت‌نام",
+      "registering": "در حال ثبت‌نام...",
+      "hasAccount": "حساب کاربری دارید؟",
+      "login": "وارد شوید"
+    },
+    "logout": "خروج",
+    "profile": "پروفایل",
+    "changePassword": "تغییر رمز عبور",
+    "currentPassword": "رمز عبور فعلی",
+    "newPassword": "رمز عبور جدید",
+    "confirmNewPassword": "تأیید رمز عبور جدید"
+  }
+}

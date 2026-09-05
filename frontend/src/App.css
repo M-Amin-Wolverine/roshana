@@ -1,0 +1,38 @@
+/* در فایل App.css یا index.css */
+:root {
+  --primary-color: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-light: #60a5fa;
+  --accent-color: #8b5cf6;
+  --bg-dark: #0a1118;
+  --bg-card: #111a22;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --border-color: #2d3748;
+  --input-bg: #1e2937;
+  --input-border: #334155;
+  --glass-bg: rgba(17, 25, 40, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --border-radius: 20px;
+  --border-radius-sm: 12px;
+}
+
+[data-theme="light"] {
+  --bg-dark: #f0f4fa;
+  --bg-card: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --border-color: #e2e8f0;
+  --input-bg: #f1f5f9;
+  --input-border: #cbd5e1;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+  .left-section { display: none; }
+  .right-section { flex: 1; }
+}

@@ -1,0 +1,188 @@
+{
+  "name": "پنل مدیریت فرتاک",
+  "short_name": "فرتاک ۴",
+  "description": "پنل مدیریت پیشرفته فرتاک برای مدیریت آموزشی و ابزارهای بهره‌وری - نسخه ۴.۰",
+  "id": "com.fertak.dashboard.v4",
+  "start_url": "/admin/dashboard?utm_source=pwa&utm_medium=standalone",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#1e1e2e",
+  "theme_color": "#1e1e2e",
+  "orientation": "any",
+  "lang": "fa",
+  "dir": "rtl",
+  "categories": ["education", "productivity", "utilities"],
+  "description_fa": "دستیار هوشمند مدیریت سیستم‌های آموزشی فرتاک",
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/maskable-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/monochrome-icon.svg",
+      "sizes": "96x96 128x128 144x144 192x192 384x384 512x512",
+      "type": "image/svg+xml",
+      "purpose": "monochrome"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "داشبورد اصلی در دسکتاپ"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "نمای کاربران در موبایل"
+    },
+    {
+      "src": "/screenshots/settings-dark.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "تنظیمات در حالت تاریک"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "داشبورد",
+      "short_name": "خانه",
+      "description": "رفتن به صفحه اصلی داشبورد فرتاک",
+      "id": "dashboard_shortcut",
+      "url": "/admin/dashboard",
+      "icons": [{ "src": "/icons/dashboard.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "کاربران",
+      "short_name": "کاربران",
+      "description": "مدیریت لیست کاربران و مجوزها",
+      "id": "users_shortcut",
+      "url": "/admin/users",
+      "icons": [{ "src": "/icons/users.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "تنظیمات پیشرفته",
+      "short_name": "تنظیمات",
+      "description": "پیکربندی امنیتی و ظاهری پنل",
+      "id": "settings_shortcut",
+      "url": "/admin/settings",
+      "icons": [{ "src": "/icons/settings.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "آپلود گزارش",
+      "short_name": "گزارش جدید",
+      "description": "ساخت سریع گزارش عملکرد آموزشی",
+      "id": "report_shortcut",
+      "url": "/admin/reports/new",
+      "icons": [{ "src": "/icons/add-report.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+fertak",
+      "url": "/admin/external-handler?data=%s"
+    },
+    {
+      "protocol": "mailto",
+      "url": "/admin/messages/compose?to=%s"
+    }
+  ],
+  "share_target": {
+    "action": "/admin/share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "name",
+      "text": "description",
+      "url": "link",
+      "files": [
+        {
+          "name": "attachments",
+          "accept": ["image/*", "application/pdf", ".docx", ".xlsx"]
+        }
+      ]
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/admin/import/config",
+      "accept": {
+        "application/json": [".json"],
+        "text/plain": [".fertakcfg"]
+      },
+      "icons": [
+        {
+          "src": "/icons/config-import.png",
+          "sizes": "256x256",
+          "type": "image/png"
+        }
+      ],
+      "launch_type": "single-client"
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "handle_links": "preferred",
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.fertak.admin",
+      "id": "com.fertak.admin"
+    }
+  ],
+  "prefer_related_applications": false,
+  "scope": "/admin",
+  "note_fa": "پنل مدیریت فرتاک - تمامی حقوق محفوظ است."
+}

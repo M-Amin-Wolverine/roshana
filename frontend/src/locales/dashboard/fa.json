@@ -1,0 +1,31 @@
+{
+  "dashboard": {
+    "title": "داشبورد",
+    "welcome": "خوش آمدید، {{name}}",
+    "statistics": {
+      "title": "آمار و ارقام",
+      "students": "دانشجویان",
+      "teachers": "اساتید",
+      "courses": "دروس",
+      "departments": "دپارتمان‌ها"
+    },
+    "recentActivity": "فعالیت‌های اخیر",
+    "quickActions": "عملیات سریع",
+    "notifications": "اعلان‌ها",
+    "calendar": "تقویم",
+    "reports": "گزارش‌ها"
+  },
+  "menu": {
+    "dashboard": "داشبورد",
+    "students": "دانشجویان",
+    "teachers": "اساتید",
+    "courses": "دروس",
+    "schedule": "برنامه هفتگی",
+    "exams": "امتحانات",
+    "results": "نتایج",
+    "library": "کتابخانه",
+    "finance": "امور مالی",
+    "reports": "گزارش‌ها",
+    "settings": "تنظیمات"
+  }
+}

@@ -1,0 +1,1018 @@
+/* ===== متغیرهای رنگ (تم تاریک پیش‌فرض) ===== */
+:root {
+    --primary-color: #3b82f6;
+    --primary-dark: #2563eb;
+    --primary-light: #60a5fa;
+    --accent-color: #8b5cf6;
+    --bg-dark: #0a1118;
+    --bg-card: #111a22;
+    --bg-card-light: #1a2632;
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --border-color: #2d3748;
+    --input-bg: #1e2937;
+    --input-border: #334155;
+    --input-focus: #3b82f6;
+    --glass-bg: rgba(17, 25, 40, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.36);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --border-radius: 20px;
+    --border-radius-sm: 12px;
+}
+
+/* ===== تم روشن ===== */
+[data-theme="light"] {
+    --primary-color: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #3b82f6;
+    --accent-color: #7c3aed;
+    --bg-dark: #f0f4fa;
+    --bg-card: #ffffff;
+    --bg-card-light: #f8fafc;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --input-bg: #f1f5f9;
+    --input-border: #cbd5e1;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Vazirmatn', 'Tajawal', sans-serif;
+}
+
+body {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    position: relative;
+}
+
+/* ===== کانتینر اصلی ===== */
+.container {
+    display: flex;
+    height: 100vh;
+    padding: 15px;
+    gap: 16px;
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== بخش چپ (برندینگ) ===== */
+.left {
+    flex: 1.2;
+    display: flex;
+    flex-direction: column;
+    padding: 17px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--glass-shadow);
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.left::-webkit-scrollbar {
+    display: none;
+}
+
+.image-wrapper {
+    width: auto;
+    aspect-ratio: 25 / 6;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    margin-bottom: 17px;
+    box-shadow: var(--glass-shadow);
+    flex-shrink: 0;
+}
+
+.image-wrapper img {
+    width: 101%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.image-wrapper:hover img {
+    transform: scale(1.05);
+}
+
+.branding-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.slogan {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.slogan.highlight {
+    color: var(--primary-light);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* ===== بخش اخبار ===== */
+.news-section {
+    margin-top: 3px;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.news-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+.news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.news-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.news-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(5px);
+}
+
+.news-date {
+    font-size: 0.75rem;
+    color: #888;
+    white-space: nowrap;
+}
+
+.news-text {
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* ===== کارت‌های شبکه‌های اجتماعی ===== */
+.social-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 1rem;
+}
+
+.social-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    font-size: 1.8rem;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.social-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.social-card:hover {
+    border-color: var(--accent-color, #00a8ff);
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+/* ===== بخش راست (فرم ورود) ===== */
+.right {
+    flex: 0.8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.login-box {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: var(--glass-shadow);
+    position: relative;
+    max-height: 100%;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+.login-box::-webkit-scrollbar {
+    display: none;
+}
+
+/* ===== نوار اطلاعات ===== */
+.info-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    font-size: 0.8rem;
+}
+
+.datetime-display,
+.ip-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+}
+
+/* ===== دکمه تغییر تم ===== */
+.theme-toggle {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-primary);
+    transition: var(--transition);
+    z-index: 10;
+    font-size: 0.9rem;
+}
+
+.theme-toggle:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+/* ===== عنوان فرم ===== */
+.login-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 6px;
+    text-align: center;
+    background: linear-gradient(135deg, var(--text-primary), var(--primary-light));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.login-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+/* ===== فرم ===== */
+.login-form {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.85rem;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    right: 12px;
+    font-size: 1rem;
+    color: var(--text-muted);
+    z-index: 1;
+}
+
+input {
+    width: 100%;
+    padding: 12px 45px 12px 15px;
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: var(--transition);
+    direction: rtl;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.forgot-link {
+    color: var(--primary-light);
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+/* ===== دکمه ورود ===== */
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    border: none;
+    border-radius: var(--border-radius-sm);
+    color: white;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.login-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+}
+
+.login-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ===== متن کمکی ===== */
+.helper-text {
+    text-align: center;
+    margin: 3px 0;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    font-size: 0.8rem;
+}
+
+.helper-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+}
+
+/* ===== نمایش آب و هوا ===== */
+.weather-display {
+    background: var(--bg-card);
+    padding: 6px;
+    border-radius: var(--border-radius-sm);
+    margin: 8px 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color);
+}
+
+/* ===== ویژگی‌ها ===== */
+.branding-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 27px;
+    margin-top: 16px;
+}
+
+.feature-badge {
+    padding: 0px 8px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 30px;
+    font-size: 0.692rem;
+    color: var(--text-primary);
+}
+
+/* ===== لینک‌های مفید ===== */
+.useful-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: -2px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.8rem;
+}
+
+.useful-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.useful-link:hover {
+    color: var(--primary-light);
+}
+
+.slogan22 {
+    background: var(--bg-card);
+    padding: 6px;
+    border-radius: var(--border-radius-sm);
+    margin: 8px 0;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.6rem;
+    border: 1px solid var(--border-color);
+}
+
+/* ===== پلیر موزیک ===== */
+.music-player {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (max-width: 767px) {
+    .music-player {
+        transform: translateY(100%);
+    }
+    .music-player.open {
+        transform: translateY(0);
+    }
+}
+
+.mobile-mini-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 25px rgba(0, 255, 255, 0.3);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+@media (min-width: 768px) {
+    .mobile-mini-toggle,
+    .mini-player-bar {
+        display: none;
+    }
+}
+
+.mini-player-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(6, 182, 212, 0.35);
+}
+
+.full-player {
+    background: linear-gradient(to bottom, #0f172a, #000);
+    border-top: 1px solid rgba(6, 182, 212, 0.4);
+    padding: 20px 16px;
+    color: white;
+}
+
+.wave-container #waveform {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    height: 64px;
+}
+
+/* ===== واکنش‌گرایی ===== */
+@media (max-width: 992px) {
+    .container {
+        padding: 12px;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .left {
+        display: none;
+    }
+    .container {
+        justify-content: center;
+    }
+    .right {
+        flex: 1;
+    }
+    .theme-toggle.fixed-mobile {
+        position: fixed;
+        bottom: 90px;
+        right: 20px;
+        z-index: 999;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .theme-toggle:not(.fixed-mobile) {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-bar {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        text-align: center;
+    }
+    .login-title {
+        font-size: 1.5rem;
+    }
+    .options {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+}
+/* ============================================
+   🎨 LoginPage Styles - نسخه نهایی خفن
+   ============================================ */
+
+/* ============================================
+   💫 انیمیشن‌های ورود صفحه
+   ============================================ */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+  }
+}
+
+.login-box {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.left {
+  animation: slideInRight 0.6s ease-out;
+}
+
+/* ============================================
+   🎯 انیمیشن دکمه لاگین
+   ============================================ */
+
+.login-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.login-btn.success-animation {
+  background: linear-gradient(135deg, #10b981, #059669);
+  animation: btnSuccess 0.5s ease-out;
+}
+
+@keyframes btnSuccess {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ریپل افکت */
+.login-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.login-btn:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* ============================================
+   🎬 انیمیشن‌های خطا
+   ============================================ */
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
+}
+
+.error-shake {
+  animation: errorShake 0.3s ease-in-out;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ============================================
+   ✨ انیمیشن موفقیت فرم
+   ============================================ */
+
+.success-glow {
+  animation: successGlow 1.5s ease-out;
+}
+
+@keyframes successGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+}
+
+/* ============================================
+   🔄 انیمیشن لودینگ
+   ============================================ */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.login-btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 20px;
+  margin-top: -10px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ============================================
+   💫 انیمیشن‌های اینپوت
+   ============================================ */
+
+.input-wrapper input {
+  transition: all 0.3s ease;
+}
+
+.input-wrapper input:focus {
+  transform: translateY(-2px);
+  animation: glowPulse 1.5s infinite;
+}
+
+/* ============================================
+   🎨 استایل نوتیفیکیشن
+   ============================================ */
+
+.notification {
+  animation: notificationSlide 0.3s ease-out;
+}
+
+@keyframes notificationSlide {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   📱 استایل ریسپانسیو
+   ============================================ */
+
+@media (max-width: 768px) {
+  .login-box {
+    animation: fadeInScale 0.4s ease-out;
+  }
+}
+
+/* ============================================
+   ✨ افکت‌های هاور
+   ============================================ */
+
+.login-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+}
+
+.social-card:hover {
+  transform: translateY(-5px) scale(1.05);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.news-item:hover {
+  transform: translateX(8px);
+  transition: all 0.3s ease;
+}
+
+/* ============================================
+   🎯 افکت شیشه‌ای (Glassmorphism)
+   ============================================ */
+
+.login-box, .left {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ============================================
+   🔥 اسکرول بار سفارشی
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+}
+/* ============================================
+   🔧 اصلاح تداخل تم - نسخه اضطراری
+   ============================================ */
+
+/* اطمینان از اعمال تم روشن روی همه المنت‌ها */
+[data-theme="light"] .roshan-container,
+[data-theme="light"] body {
+  background: #f0f4fa !important;
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .login-box {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .left {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .login-title {
+  background: linear-gradient(135deg, #1e293b, #2563eb) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+}
+
+[data-theme="light"] .login-subtitle {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .form-group label {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .input-wrapper input {
+  background: #f1f5f9 !important;
+  color: #1e293b !important;
+  border: 2px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .input-wrapper input::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .input-icon {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .info-bar {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .datetime-display,
+[data-theme="light"] .ip-display {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .remember-me {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .forgot-link {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .forgot-link:hover {
+  color: #1d4ed8 !important;
+}
+
+[data-theme="light"] .helper-text {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .helper-contact {
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .weather-display {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .feature-badge {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .useful-link {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .useful-link:hover {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .slogan22 {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+[data-theme="light"] .news-section {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-theme="light"] .news-item {
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="light"] .news-item:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="light"] .news-text {
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .news-date {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .theme-toggle {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .theme-toggle.fixed-mobile {
+  background: #ffffff !important;
+  color: #1e293b !important;
+}
+
+/* گلش‌های اضافی برای لایت مود */
+[data-theme="light"] #particles-canvas {
+  opacity: 0.4 !important;
+}
