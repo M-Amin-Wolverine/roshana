@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+*.pem
+*.key
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Test & temp
+*.tmp
+*.temp
+.tmp/
+.temp/
+coverage/
+.nyc_output/
+
+# Large / junk files in this repo
+frontend/as.js
+frontend/as copy.js
+frontend/as copy 2.html
+frontend/webpack.config.js
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/uploads/
+backend/*.db
+backend/*.sqlite
+
+# Misc
+*.local
+.vercel
+.netlify
+.turbo
