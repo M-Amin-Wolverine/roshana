@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت دیتابیس</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .sidebar {
+            background: #1a1a2e;
+            color: white;
+            width: 250px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar h3 {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+        .sidebar a {
+            display: block;
+            padding: 15px 20px;
+            color: #aaa;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background: #0f3460;
+            color: white;
+        }
+        .main-content {
+            margin-right: 250px;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-card h2 {
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: right;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .btn-danger { background: #e74c3c; }
+        .btn-warning { background: #f39c12; }
+        .btn-success { background: #27ae60; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            width: 500px;
+            margin: 100px auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .modal-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 10px 10px 0 0;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1001;
+        }
+        .toast.error { background: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>📊 مدیریت دیتابیس</h3>
+        <a href="#" onclick="showDashboard()" class="active" id="nav-dashboard">📈 داشبورد</a>
+        <a href="#" onclick="showTables()" id="nav-tables">📋 جدول‌ها</a>
+        <a href="#" onclick="showRelations()" id="nav-relations">🔗 روابط</a>
+        <a href="#" onclick="showQueryModal()" id="nav-query">💻 کوئری دلخواه</a>
+        <a href="#" onclick="backupDatabase()" id="nav-backup">💾 بکاپ</a>
+        <hr style="margin: 20px; border-color: #333;">
+        <a href="/">🏠 بازگشت به سایت</a>
+    </div>
+    
+    <div class="main-content">
+        <div id="content">
+            <div class="loading">⏳ در حال بارگذاری...</div>
+        </div>
+    </div>
+    
+    <!-- Modal for Add/Edit -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">عنوان</h3>
+            </div>
+            <div id="modalBody"></div>
+            <div style="text-align: left; margin-top: 20px;">
+                <button onclick="closeModal()">انصراف</button>
+                <button class="btn-success" onclick="submitForm()">ذخیره</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Query -->
+    <div id="queryModal" class="modal">
+        <div class="modal-content" style="width: 800px;">
+            <div class="modal-header">
+                <h3>اجرای کوئری دلخواه</h3>
+            </div>
+            <textarea id="queryInput" rows="5" style="width: 100%; font-family: monospace;" placeholder="SELECT * FROM users LIMIT 10"></textarea>
+            <div id="queryResult"></div>
+            <div style="text-align: left; margin-top: 20px;">
+                <button onclick="closeQueryModal()">بستن</button>
+                <button class="btn-success" onclick="executeQuery()">اجرا</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast"></div>
+    
+    <script>
+        let currentTable = '';
+        let currentColumns = [];
+        let isEditMode = false;
+        let currentPage = 1;
+        let totalPages = 1;
+        
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = msg;
+            toast.className = `toast ${type}`;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+        
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: { 'Content-Type': 'application/json', ...options.headers }
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                return data;
+            } catch (error) {
+                showToast(error.message, 'error');
+                throw error;
+            }
+        }
+        
+        function setActiveNav(navId) {
+            ['dashboard', 'tables', 'relations', 'query', 'backup'].forEach(id => {
+                const el = document.getElementById(`nav-${id}`);
+                if (el) el.classList.remove('active');
+            });
+            document.getElementById(`nav-${navId}`).classList.add('active');
+        }
+        
+        async function showDashboard() {
+            setActiveNav('dashboard');
+            document.getElementById('content').innerHTML = '<div class="loading">⏳ در حال بارگذاری...</div>';
+            
+            try {
+                const data = await apiCall('/admin/stats');
+                
+                let html = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>📊 جدول‌ها</h3>
+                            <h2>${data.stats.totalTables}</h2>
+                        </div>
+                        <div class="stat-card">
+                            <h3>📈 رکوردها</h3>
+                            <h2>${data.stats.totalRows.toLocaleString()}</h2>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>📋 لیست جدول‌ها</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr><th>#</th><th>نام جدول</th><th>تعداد رکورد</th><th>عملیات</th></tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                data.stats.tables.forEach((t, i) => {
+                    html += `<tr>
+                        <td>${i+1}</td>
+                        <td><strong>${t.name}</strong></td>
+                        <td>${t.rowCount.toLocaleString()}</td>
+                        <td><button onclick="viewTable('${t.name}')">👁️ مشاهده</button></td>
+                    </tr>`;
+                });
+                
+                html += `</tbody> </table> </div> </div>`;
+                document.getElementById('content').innerHTML = html;
+            } catch(err) {
+                document.getElementById('content').innerHTML = `<div class="card" style="color:red;">❌ خطا: ${err.message}</div>`;
+            }
+        }
+        
+        async function showTables() {
+            setActiveNav('tables');
+            document.getElementById('content').innerHTML = '<div class="loading">⏳ در حال بارگذاری...</div>';
+            
+            try {
+                const data = await apiCall('/admin/tables');
+                
+                let html = `
+                    <div class="card">
+                        <h3>📋 تمام جدول‌های دیتابیس (${data.tables.length} جدول)</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>#</th><th>نام جدول</th><th>عملیات</th></tr></thead>
+                                <tbody>
+                `;
+                
+                data.tables.forEach((t, i) => {
+                    html += `<tr>
+                        <td>${i+1}</td>
+                        <td><strong>${t.name}</strong></td>
+                        <td><button onclick="viewTable('${t.name}')">👁️ مشاهده</button> <button onclick="exportTable('${t.name}')">📥 خروجی</button></td>
+                    </tr>`;
+                });
+                
+                html += `</tbody> </table> </div> </div>`;
+                document.getElementById('content').innerHTML = html;
+            } catch(err) {
+                document.getElementById('content').innerHTML = `<div class="card" style="color:red;">❌ خطا: ${err.message}</div>`;
+            }
+        }
+        
+        async function viewTable(tableName, page = 1) {
+            currentTable = tableName;
+            currentPage = page;
+            document.getElementById('content').innerHTML = '<div class="loading">⏳ در حال بارگذاری جدول...</div>';
+            
+            try {
+                const data = await apiCall(`/admin/table/${tableName}?page=${page}`);
+                currentColumns = data.columns;
+                totalPages = data.totalPages;
+                
+                let html = `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                            <h3>📊 جدول: ${tableName}</h3>
+                            <div>
+                                <button class="btn-success" onclick="showAddRecord()">➕ افزودن</button>
+                                <button onclick="showTables()">🔙 بازگشت</button>
+                            </div>
+                        </div>
+                        <div class="alert" style="background: #e1f5fe; padding: 10px; border-radius: 5px; margin-bottom: 10px;">
+                            📊 کل رکوردها: ${data.totalCount} | صفحه ${data.currentPage} از ${data.totalPages}
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr>
+                `;
+                
+                for (const col of data.columns) {
+                    html += `<th>${col.name}<br><small>${col.type || 'TEXT'}</small></th>`;
+                }
+                html += `<th>عملیات</th></tr></thead><tbody>`;
+                
+                for (const row of data.rows) {
+                    html += '<tr>';
+                    for (const col of data.columns) {
+                        let val = row[col.name];
+                        if (val === null || val === undefined) val = '<i>NULL</i>';
+                        else if (typeof val === 'object') val = JSON.stringify(val).substring(0, 50);
+                        else if (String(val).length > 100) val = String(val).substring(0, 100) + '...';
+                        html += `<td>${val}</td>`;
+                    }
+                    html += `<td>
+                        <button class="btn-warning" onclick='editRecord(${JSON.stringify(row)})'>✏️</button>
+                        <button class="btn-danger" onclick="deleteRecord(${row.id || Object.values(row)[0]})">🗑️</button>
+                    </td></tr>`;
+                }
+                
+                html += `</tbody></table></div>
+                        <div class="pagination">
+                            <button onclick="viewTable('${tableName}', ${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>قبلی</button>
+                            <span>صفحه ${currentPage} از ${totalPages}</span>
+                            <button onclick="viewTable('${tableName}', ${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>بعدی</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('content').innerHTML = html;
+            } catch(err) {
+                document.getElementById('content').innerHTML = `<div class="card" style="color:red;">❌ خطا: ${err.message}</div>`;
+            }
+        }
+        
+        function showAddRecord() {
+            isEditMode = false;
+            document.getElementById('modalTitle').innerText = `افزودن رکورد جدید به ${currentTable}`;
+            
+            let html = '';
+            for (const col of currentColumns) {
+                if (col.pk === 1 && col.name === 'id') continue;
+                html += `
+                    <label>${col.name}</label>
+                    <input type="text" name="${col.name}" placeholder="مقدار ${col.name}">
+                `;
+            }
+            html += '<input type="hidden" id="recordId" value="">';
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('dataModal').style.display = 'block';
+        }
+        
+        function editRecord(row) {
+            isEditMode = true;
+            document.getElementById('modalTitle').innerText = `ویرایش رکورد در ${currentTable}`;
+            
+            let html = '';
+            for (const col of currentColumns) {
+                if (col.pk === 1 && col.name === 'id') continue;
+                let val = row[col.name] || '';
+                html += `
+                    <label>${col.name}</label>
+                    <input type="text" name="${col.name}" value="${String(val).replace(/"/g, '&quot;')}">
+                `;
+            }
+            html += `<input type="hidden" id="recordId" value="${row.id || Object.values(row)[0]}">`;
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('dataModal').style.display = 'block';
+        }
+        
+        async function submitForm() {
+            const formData = {};
+            const inputs = document.querySelectorAll('#modalBody input');
+            for (const input of inputs) {
+                if (input.id !== 'recordId') {
+                    formData[input.name] = input.value;
+                }
+            }
+            
+            const recordId = document.getElementById('recordId').value;
+            const url = isEditMode ? 
+                `/admin/table/${currentTable}/${recordId}` :
+                `/admin/table/${currentTable}`;
+            const method = isEditMode ? 'PUT' : 'POST';
+            
+            try {
+                await apiCall(url, { method, body: JSON.stringify(formData) });
+                closeModal();
+                showToast(isEditMode ? 'ویرایش شد' : 'افزوده شد');
+                viewTable(currentTable, currentPage);
+            } catch(err) {}
+        }
+        
+        async function deleteRecord(id) {
+            if (!confirm('⚠️ آیا از حذف اطمینان دارید؟')) return;
+            try {
+                await apiCall(`/admin/table/${currentTable}/${id}`, { method: 'DELETE' });
+                showToast('حذف شد');
+                viewTable(currentTable, currentPage);
+            } catch(err) {}
+        }
+        
+        async function showRelations() {
+            setActiveNav('relations');
+            document.getElementById('content').innerHTML = '<div class="loading">⏳ در حال بارگذاری...</div>';
+            
+            try {
+                const data = await apiCall('/admin/relations');
+                
+                if (data.relations.length === 0) {
+                    document.getElementById('content').innerHTML = '<div class="card">🔗 هیچ رابطه‌ای یافت نشد</div>';
+                } else {
+                    let html = '<div class="card"><h3>🔗 روابط بین جدول‌ها</h3><div class="table-responsive"><table><thead><tr><th>از جدول</th><th>ستون</th><th>به جدول</th><th>ستون هدف</th></tr></thead><tbody>';
+                    for (const r of data.relations) {
+                        html += `<tr><td>${r.from.table}</td><td>${r.from.column}</td><td>${r.to.table}</td><td>${r.to.column}</td></tr>`;
+                    }
+                    html += `</tbody></table></div></div>`;
+                    document.getElementById('content').innerHTML = html;
+                }
+            } catch(err) {
+                document.getElementById('content').innerHTML = `<div class="card" style="color:red;">❌ خطا: ${err.message}</div>`;
+            }
+        }
+        
+        function showQueryModal() {
+            document.getElementById('queryModal').style.display = 'block';
+            document.getElementById('queryResult').innerHTML = '';
+        }
+        
+        function closeQueryModal() {
+            document.getElementById('queryModal').style.display = 'none';
+        }
+        
+        async function executeQuery() {
+            const sql = document.getElementById('queryInput').value;
+            if (!sql.trim()) {
+                showToast('لطفاً کوئری وارد کنید', 'error');
+                return;
+            }
+            
+            document.getElementById('queryResult').innerHTML = '<div style="background:#f4f4f4;padding:10px;">⏳ در حال اجرا...</div>';
+            
+            try {
+                const data = await apiCall('/admin/query', {
+                    method: 'POST',
+                    body: JSON.stringify({ sql })
+                });
+                
+                if (data.result && data.result.length > 0) {
+                    let tableHtml = `<div style="background:#d4edda;padding:10px;margin:10px 0;">✅ ${data.count} رکورد یافت شد</div>
+                        <div class="table-responsive"><table><thead><tr>`;
+                    for (const key in data.result[0]) {
+                        tableHtml += `<th>${key}</th>`;
+                    }
+                    tableHtml += `</tr></thead><tbody>`;
+                    for (const row of data.result.slice(0, 50)) {
+                        tableHtml += '<tr>';
+                        for (const val of Object.values(row)) {
+                            tableHtml += `<td>${val === null ? 'NULL' : String(val).substring(0, 100)}</td>`;
+                        }
+                        tableHtml += '</tr>';
+                    }
+                    tableHtml += `</tbody></table></div>`;
+                    if (data.result.length > 50) {
+                        tableHtml += `<div>فقط 50 رکورد اول نمایش داده شده</div>`;
+                    }
+                    document.getElementById('queryResult').innerHTML = tableHtml;
+                } else {
+                    document.getElementById('queryResult').innerHTML = '<div style="background:#fff3cd;padding:10px;">⚠️ نتیجه‌ای یافت نشد</div>';
+                }
+            } catch(err) {
+                document.getElementById('queryResult').innerHTML = `<div style="background:#f8d7da;padding:10px;color:red;">❌ ${err.message}</div>`;
+            }
+        }
+        
+        function backupDatabase() {
+            if (confirm('بکاپ تهیه شود؟')) {
+                window.location.href = '/admin/backup';
+                showToast('بکاپ در حال تهیه...');
+            }
+        }
+        
+        function exportTable(tableName) {
+            window.location.href = `/admin/export/${tableName}`;
+        }
+        
+        function closeModal() {
+            document.getElementById('dataModal').style.display = 'none';
+        }
+        
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('dataModal')) closeModal();
+            if (event.target === document.getElementById('queryModal')) closeQueryModal();
+        }
+        
+        showDashboard();
+    </script>
+</body>
+</html>

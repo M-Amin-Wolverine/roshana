@@ -1,0 +1,1001 @@
+/* /**
+ * ═══════════════════════════════════════════════════════════════════
+ * 📱 SMS Service - نسخه پیشرفته و حرفه‌ای
+ * Multi-Provider SMS Gateway with Queue & Templates
+ * ═══════════════════════════════════════════════════════════════════
+ */
+const botService = require('../services/botService');
+const axios = require('axios');
+const crypto = require('crypto');
+
+// ═══════════════════════════════════════════════════════════════════
+// 🎨 Console Colors
+// ═══════════════════════════════════════════════════════════════════
+
+const Colors = {
+    RESET: '\x1b[0m',
+    RED: '\x1b[31m',
+    GREEN: '\x1b[32m',
+    YELLOW: '\x1b[33m',
+    BLUE: '\x1b[34m',
+    MAGENTA: '\x1b[35m',
+    CYAN: '\x1b[36m',
+    GRAY: '\x1b[90m'
+};
+
+const log = {
+    info: (msg) => console.log(`${Colors.CYAN}ℹ${Colors.RESET} ${msg}`),
+    success: (msg) => console.log(`${Colors.GREEN}✓${Colors.RESET} ${msg}`),
+    error: (msg) => console.log(`${Colors.RED}✗${Colors.RESET} ${msg}`),
+    warn: (msg) => console.log(`${Colors.YELLOW}⚠${Colors.RESET} ${msg}`),
+    debug: (msg) => process.env.NODE_ENV === 'development' && console.log(`${Colors.GRAY}⚙${Colors.RESET} ${msg}`)
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// ⚙️ Configuration
+// ═══════════════════════════════════════════════════════════════════
+
+const CONFIG = {
+    // Provider Settings
+    provider: process.env.SMS_PROVIDER || 'kavenegar',
+    apiKey: process.env.SMS_API_KEY,
+    apiSecret: process.env.SMS_API_SECRET,
+    sender: process.env.SMS_SENDER_NUMBER,
+    username: process.env.SMS_USERNAME,
+    password: process.env.SMS_PASSWORD,
+    
+    // Rate Limiting
+    rateLimit: {
+        maxPerMinute: parseInt(process.env.SMS_MAX_PER_MINUTE) || 10,
+        maxPerHour: parseInt(process.env.SMS_MAX_PER_HOUR) || 100,
+        maxPerDay: parseInt(process.env.SMS_MAX_PER_DAY) || 500
+    },
+    
+    // Queue Settings
+    queue: {
+        enabled: process.env.SMS_QUEUE_ENABLED === 'true',
+        concurrency: parseInt(process.env.SMS_QUEUE_CONCURRENCY) || 5,
+        retryAttempts: 3,
+        retryDelay: 5000
+    },
+    
+    // Message Settings
+    message: {
+        maxLength: parseInt(process.env.SMS_MAX_LENGTH) || 160,
+        unicodeEnabled: process.env.SMS_UNICODE_ENABLED === 'true',
+        flashEnabled: process.env.SMS_FLASH_ENABLED === 'true'
+    },
+    
+    // Logging
+    logging: {
+        enabled: process.env.SMS_LOGGING_ENABLED !== 'false',
+        logFile: process.env.SMS_LOG_FILE || './logs/sms.log'
+    },
+    
+    // Mock Mode (Development)
+    mockMode: process.env.NODE_ENV === 'development' || process.env.SMS_MOCK_MODE === 'true'
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// 📋 Message Templates
+// ═══════════════════════════════════════════════════════════════════
+
+const TEMPLATES = {
+    // Verification Codes
+    VERIFICATION_CODE: {
+        fa: 'کد تأیید {code} - روشنا',
+        en: 'Your verification code: {code} - Roshana'
+    },
+    
+    // Welcome
+    WELCOME: {
+        fa: 'سلام {name}! خوش آمدید به روشنا',
+        en: 'Hello {name}! Welcome to Roshana'
+    },
+    
+    // Password Reset
+    PASSWORD_RESET: {
+        fa: 'کد بازیابی رمز عبور: {code}',
+        en: 'Password reset code: {code}'
+    },
+    
+    // Order Confirmation
+    ORDER_CONFIRMATION: {
+        fa: 'سفارش شما با کد {orderId} ثبت شد',
+        en: 'Your order {orderId} has been confirmed'
+    },
+    
+    // OTP
+    OTP: {
+        fa: 'کد یکبار مصرف: {code} (منقضی: {minutes} دقیقه)',
+        en: 'One-time code: {code} (expires in {minutes} min)'
+    },
+    
+    // Login Alert
+    LOGIN_ALERT: {
+        fa: 'ورود جدید به حساب کاربری از {device} در {location}',
+        en: 'New login to your account from {device} in {location}'
+    },
+    
+    // Transaction
+    TRANSACTION: {
+        fa: 'تراکنش {amount} تومان - {description}',
+        en: 'Transaction of {amount} - {description}'
+    },
+    
+    // Appointment Reminder
+    APPOINTMENT_REMINDER: {
+        fa: 'یادآوری: قرار ملاقات {title} در {time}',
+        en: 'Reminder: {title} appointment at {time}'
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// 🔧 SMS Service Class
+// ═══════════════════════════════════════════════════════════════════
+
+class SMSService {
+    constructor() {
+        this.config = CONFIG;
+        this.templates = TEMPLATES;
+        this.provider = CONFIG.provider;
+        
+        // Rate limiting
+        this.rateLimitStore = new Map();
+        
+        // Message queue
+        this.messageQueue = [];
+        this.processing = false;
+        
+        // Statistics
+        this.stats = {
+            totalSent: 0,
+            totalFailed: 0,
+            totalQueued: 0,
+            byProvider: {},
+            byTemplate: {}
+        };
+        
+        log.info(`SMS Service initialized with provider: ${this.provider}`);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📤 Send SMS
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Send SMS message
+     * @param {Object} options - Message options
+     * @returns {Promise<Object>} Send result
+     */
+    async send(options) {
+        const { to, message, template, templateData, sender, flash, unicode, priority } = options;
+        
+        // Validate phone number
+        const formattedPhone = this.formatPhoneNumber(to);
+        if (!this.validatePhoneNumber(formattedPhone)) {
+            throw new Error(`Invalid phone number: ${to}`);
+        }
+        
+        // Get message content
+        let messageContent = message;
+        if (template) {
+            messageContent = this.renderTemplate(template, templateData);
+        }
+        
+        if (!messageContent) {
+            throw new Error('Message content is required');
+        }
+        
+        // Check rate limit
+        await this.checkRateLimit(formattedPhone);
+        
+        // Log
+        log.debug(`Sending SMS to ${formattedPhone}: ${messageContent.substring(0, 50)}...`);
+        
+        // Mock mode for development
+        if (CONFIG.mockMode) {
+            return this.mockSend(formattedPhone, messageContent);
+        }
+        
+        // Send based on provider
+        try {
+            let result;
+            
+            switch (this.provider) {
+                case 'kavenegar':
+                    result = await this.sendWithKavenegar(formattedPhone, messageContent, sender);
+                    break;
+                    
+                case 'melipayamak':
+                    result = await this.sendWithMelipayamak(formattedPhone, messageContent, sender);
+                    break;
+                    
+                case 'ghasedak':
+                    result = await this.sendWithGhasedak(formattedPhone, messageContent, sender);
+                    break;
+                    
+                case 'smsir':
+                    result = await this.sendWithSMSIr(formattedPhone, messageContent, sender);
+                    break;
+                    
+                case 'kavehnegar':
+                    result = await this.sendWithKavehNegar(formattedPhone, messageContent, sender);
+                    break;
+                    
+                case 'ippanel':
+                    result = await this.sendWithIPPanel(formattedPhone, messageContent, sender);
+                    break;
+                    
+                default:
+                    throw new Error(`Unknown SMS provider: ${this.provider}`);
+            }
+            
+            // Update statistics
+            this.updateStats('sent', template || 'direct');
+            
+            // Log success
+            log.success(`SMS sent to ${formattedPhone}: ${result.messageId}`);
+            
+            return {
+                success: true,
+                messageId: result.messageId,
+                status: result.status,
+                provider: this.provider,
+                phone: formattedPhone,
+                message: messageContent,
+                sentAt: new Date()
+            };
+            
+        } catch (error) {
+            this.updateStats('failed', template || 'direct');
+            log.error(`SMS send failed: ${error.message}`);
+            throw error;
+        }if (!user.chat_id) {
+            await botService.sendLog('WARN', `کاربر ${to} ربات را فعال نکرده`);
+            throw new Error('کاربر ربات را فعال نکرده');
+    }
+
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📤 Send with Kavenegar
+    // ═══════════════════════════════════════════════════════════════
+
+    async sendWithKavenegar(phone, message, sender = null) {
+        const url = `https://api.kavenegar.com/v1/${CONFIG.apiKey}/sms/send.json`;
+        
+        const response = await axios.post(url, {
+            receptor: phone,
+            sender: sender || CONFIG.sender,
+            message: message
+        }, {
+            timeout: 10000,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        
+        if (response.data.return && response.data.return.status !== 200) {
+            throw new Error(`Kavenegar error: ${response.data.return.message}`);
+        }
+        
+        return {
+            messageId: response.data.entries[0]?.messageid,
+            status: response.data.entries[0]?.status,
+            statusText: response.data.entries[0]?.statustext
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📤 Send with Meli Payamak
+    // ═══════════════════════════════════════════════════════════════
+
+    async sendWithMelipayamak(phone, message, sender = null) {
+        const url = 'https://rest.melipayamak.com/api/send/ordinary';
+        
+        const response = await axios.post(url, {
+            username: CONFIG.username,
+            password: CONFIG.password,
+            to: phone,
+            from: sender || CONFIG.sender,
+            text: message
+        }, {
+            timeout: 10000
+        });
+        
+        if (response.data === 0 || response.data < 0) {
+            throw new Error(`MeliPayamak error: ${response.data}`);
+        }
+        
+        return {
+            messageId: response.data
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📤 Send with Ghasedak
+    // ═══════════════════════════════════════════════════════════════
+
+    async sendWithGhasedak(phone, message, sender = null) {
+        const url = 'https://ghasedak.me/api/v2/sms/send';
+        
+        const response = await axios.post(url, {
+            receptor: phone,
+            message: message,
+            sender: sender || CONFIG.sender
+        }, {
+            headers: {
+                'apikey': CONFIG.apiKey,
+                'Content-Type': 'application/json'
+            },
+            timeout: 10000
+        });
+        
+        if (response.data.error) {
+            throw new Error(`Ghasedak error: ${response.data.error.message}`);
+        }
+        
+        return {
+            messageId: response.data.items[0]?.id,
+            status: response.data.items[0]?.status
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📤 Send with SMSIr
+    // ═══════════════════════════════════════════════════════════════
+
+    async sendWithSMSIr(phone, message, sender = null) {
+        const url = 'https://ws.sms.ir/api/api/ultra/send/';
+        
+        const data = {
+            mobile: phone,
+            message: message,
+            senderNumber: sender || CONFIG.sender
+        };
+        
+        const response = await axios.post(url, data, {
+            headers: {
+                'x-api-key': CONFIG.apiKey,
+                'Content-Type': 'application/json'
+            },
+            timeout: 10000
+        });
+        
+        return {
+            messageId: response.data?.ids?.[0] || response.data?.batchId
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📤 Send with KavehNegar
+    // ═══════════════════════════════════════════════════════════════
+
+    async sendWithKavehNegar(phone, message, sender = null) {
+        const url = 'https://api.kavenegar.com/v1/verify/send.json';
+        
+        const response = await axios.post(url, {
+            receptor: phone,
+            token: message,
+            template: 'roshana-verify'
+        }, {
+            timeout: 10000
+        });
+        
+        return {
+            messageId: response.data.entries[0]?.messageid,
+            status: response.data.entries[0]?.status
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📤 Send with IPPanel
+    // ═══════════════════════════════════════════════════════════════
+
+    async sendWithIPPanel(phone, message, sender = null) {
+        const url = 'https://ippanel.com/api/selector/send';
+        
+        const response = await axios.post(url, {
+            to: [phone],
+            message: message,
+            sender: sender || CONFIG.sender
+        }, {
+            headers: {
+                'Authorization': `AccessToken ${CONFIG.apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            timeout: 10000
+        });
+        
+        return {
+            messageId: response.data?.bulkId
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎭 Mock Send (Development)
+    // ═══════════════════════════════════════════════════════════════
+
+    async mockSend(phone, message) {
+        log.info(`[MOCK] Sending SMS to ${phone}: ${message}`);
+        
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const mockId = crypto.randomUUID();
+        
+        return {
+            success: true,
+            messageId: mockId,
+            status: 'queued',
+            mock: true,
+            phone,
+            message
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📊 Bulk Send
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Send bulk SMS
+     * @param {Array} recipients - Array of phone numbers
+     * @param {string} message - Message content
+     * @returns {Promise<Array>} Results
+     */
+    async sendBulk(recipients, message) {
+        const results = [];
+        const batchSize = CONFIG.rateLimit.maxPerMinute;
+        
+        log.info(`Sending bulk SMS to ${recipients.length} recipients`);
+        
+        // Process in batches
+        for (let i = 0; i < recipients.length; i += batchSize) {
+            const batch = recipients.slice(i, i + batchSize);
+            
+            const batchResults = await Promise.allSettled(
+                batch.map(phone => this.send({ to: phone, message }))
+            );
+            
+            results.push(...batchResults.map((result, index) => ({
+                phone: batch[index],
+                ...(result.status === 'fulfilled' ? result.value : { error: result.reason.message })
+            })));
+            
+            // Rate limiting delay between batches
+            if (i + batchSize < recipients.length) {
+                await this.delay(60000); // Wait 1 minute between batches
+            }
+        }
+        
+        return results;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📅 Schedule SMS
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Schedule SMS for later delivery
+     * @param {Object} options - Message options
+     * @param {Date} scheduledAt - Scheduled time
+     * @returns {Promise<Object>} Schedule result
+     */
+    async schedule(options, scheduledAt) {
+        const delay = scheduledAt.getTime() - Date.now();
+        
+        if (delay < 0) {
+            throw new Error('Scheduled time must be in the future');
+        }
+        
+        const scheduleId = crypto.randomUUID();
+        
+        // Store scheduled message
+        const scheduledMessage = {
+            id: scheduleId,
+            ...options,
+            scheduledAt,
+            status: 'scheduled'
+        };
+        
+        // Set timeout
+        setTimeout(async () => {
+            try {
+                await this.send(options);
+                log.success(`Scheduled SMS ${scheduleId} sent`);
+            } catch (error) {
+                log.error(`Scheduled SMS ${scheduleId} failed: ${error.message}`);
+            }
+        }, delay);
+        
+        log.info(`SMS scheduled for ${scheduledAt.toISOString()}, ID: ${scheduleId}`);
+        
+        return {
+            success: true,
+            scheduleId,
+            scheduledAt,
+            status: 'scheduled'
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔐 Send Verification Code
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Send verification code
+     * @param {string} phone - Phone number
+     * @param {string} code - Verification code
+     * @param {string} type - Type of verification
+     * @returns {Promise<Object>} Send result
+     */
+    async sendVerificationCode(phone, code, type = 'login') {
+        const templates = {
+            login: 'OTP',
+            register: 'VERIFICATION_CODE',
+            reset_password: 'PASSWORD_RESET',
+            verify_phone: 'VERIFICATION_CODE'
+        };
+        
+        const template = templates[type] || 'OTP';
+        
+        return this.send({
+            to: phone,
+            template,
+            templateData: {
+                code,
+                minutes: 5
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📨 Send Template Message
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Send templated message
+     * @param {string} phone - Phone number
+     * @param {string} templateName - Template name
+     * @param {Object} data - Template data
+     * @returns {Promise<Object>} Send result
+     */
+    async sendTemplate(phone, templateName, data) {
+        return this.send({
+            to: phone,
+            template: templateName,
+            templateData: data
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔢 Generate OTP
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Generate OTP code
+     * @param {number} length - Code length
+     * @returns {string} OTP code
+     */
+    generateOTP(length = 6) {
+        const min = Math.pow(10, length - 1);
+        const max = Math.pow(10, length) - 1;
+        return String(Math.floor(Math.random() * (max - min + 1)) + min);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔢 Generate & Send OTP
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Generate and send OTP
+     * @param {string} phone - Phone number
+     * @param {string} type - OTP type
+     * @param {number} length - Code length
+     * @returns {Promise<Object>} Result with code
+     */
+    async generateAndSendOTP(phone, type = 'login', length = 6) {
+        const code = this.generateOTP(length);
+        
+        const result = await this.sendVerificationCode(phone, code, type);
+        
+        // Return result with code (for testing - in production, don't return code)
+        return {
+            ...result,
+            code: process.env.NODE_ENV === 'development' ? code : undefined,
+            expiresIn: 300 // 5 minutes
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔍 Verify OTP
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Verify OTP code (you need to implement storage)
+     * @param {string} phone - Phone number
+     * @param {string} code - OTP code
+     * @param {string} type - OTP type
+     * @returns {Promise<boolean>} Is valid
+     */
+    async verifyOTP(phone, code, type = 'login') {
+        // This should check against stored OTPs in database
+        // Implementation depends on your OTP storage
+        log.warn('OTP verification not implemented - implement with database');
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📱 Format Phone Number
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Format phone number to Iranian format
+     * @param {string} phone - Phone number
+     * @returns {string} Formatted phone
+     */
+    formatPhoneNumber(phone) {
+        if (!phone) return null;
+        
+        // Remove all non-digit characters
+        let cleaned = phone.replace(/\D/g, '');
+        
+        // Handle different formats
+        if (cleaned.startsWith('+98')) {
+            cleaned = cleaned.substring(3);
+        } else if (cleaned.startsWith('98')) {
+            cleaned = cleaned.substring(2);
+        } else if (cleaned.startsWith('0')) {
+            cleaned = cleaned.substring(1);
+        }
+        
+        // Ensure it starts with 9 (Iranian mobile)
+        if (!cleaned.startsWith('9')) {
+            cleaned = '9' + cleaned;
+        }
+        
+        return '98' + cleaned;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ✅ Validate Phone Number
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Validate phone number
+     * @param {string} phone - Phone number
+     * @returns {boolean} Is valid
+     */
+    validatePhoneNumber(phone) {
+        const iranianMobileRegex = /^989[0-9]{9}$/;
+        return iranianMobileRegex.test(phone);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🎨 Render Template
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Render message template
+     * @param {string} templateName - Template name
+     * @param {Object} data - Template data
+     * @returns {string} Rendered message
+     */
+    renderTemplate(templateName, data = {}) {
+        const template = TEMPLATES[templateName];
+        
+        if (!template) {
+            throw new Error(`Template not found: ${templateName}`);
+        }
+        
+        // Use Persian by default
+        let message = template.fa || template.en || '';
+        
+        // Replace placeholders
+        for (const [key, value] of Object.entries(data)) {
+            message = message.replace(new RegExp(`{${key}}`, 'g'), value);
+        }
+        
+        return message;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ⏱️ Rate Limiting
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Check rate limit
+     * @param {string} phone - Phone number
+     */
+    async checkRateLimit(phone) {
+        const now = Date.now();
+        const key = `sms_${phone}`;
+        
+        // Get existing data
+        let data = this.rateLimitStore.get(key) || {
+            minute: { count: 0, resetAt: now + 60000 },
+            hour: { count: 0, resetAt: now + 3600000 },
+            day: { count: 0, resetAt: now + 86400000 }
+        };
+        
+        // Reset counters if expired
+        if (now > data.minute.resetAt) {
+            data.minute = { count: 0, resetAt: now + 60000 };
+        }
+        if (now > data.hour.resetAt) {
+            data.hour = { count: 0, resetAt: now + 3600000 };
+        }
+        if (now > data.day.resetAt) {
+            data.day = { count: 0, resetAt: now + 86400000 };
+        }
+        
+        // Check limits
+        if (data.minute.count >= CONFIG.rateLimit.maxPerMinute) {
+            throw new Error('Rate limit exceeded: max per minute');
+        }
+        if (data.hour.count >= CONFIG.rateLimit.maxPerHour) {
+            throw new Error('Rate limit exceeded: max per hour');
+        }
+        if (data.day.count >= CONFIG.rateLimit.maxPerDay) {
+            throw new Error('Rate limit exceeded: max per day');
+        }
+        
+        // Increment counters
+        data.minute.count++;
+        data.hour.count++;
+        data.day.count++;
+        
+        this.rateLimitStore.set(key, data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📊 Get Account Info
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Get account balance/info
+     * @returns {Promise<Object>} Account info
+     */
+    async getAccountInfo() {
+        if (CONFIG.mockMode) {
+            return {
+                balance: 1000000,
+                credit: 1000000,
+                senderNumbers: [CONFIG.sender],
+                mock: true
+            };
+        }
+        
+        switch (this.provider) {
+            case 'kavenegar':
+                return this.getKavenegarInfo();
+            case 'ghasedak':
+                return this.getGhasedakInfo();
+            default:
+                return { provider: this.provider };
+        }
+    }
+
+    async getKavenegarInfo() {
+        const url = `https://api.kavenegar.com/v1/${CONFIG.apiKey}/account/info.json`;
+        const response = await axios.get(url);
+        
+        return {
+            balance: response.data.entries?.remaincredit,
+            expdate: response.data.entries?.expiredate,
+            senderNumbers: response.data.entries?.sendmethods
+        };
+    }
+
+    async getGhasedakInfo() {
+        const url = 'https://ghasedak.me/api/v2/sms/credit';
+        const response = await axios.get(url, {
+            headers: { 'apikey': CONFIG.apiKey }
+        });
+        
+        return {
+            balance: response.data?.credit
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔍 Get Delivery Status
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Get message delivery status
+     * @param {string} messageId - Message ID
+     * @returns {Promise<Object>} Delivery status
+     */
+    async getDeliveryStatus(messageId) {
+        if (CONFIG.mockMode) {
+            return {
+                messageId,
+                status: 'delivered',
+                deliveredAt: new Date(),
+                mock: true
+            };
+        }
+        
+        switch (this.provider) {
+            case 'kavenegar':
+                return this.getKavenegarStatus(messageId);
+            default:
+                return { messageId, status: 'unknown' };
+        }
+    }
+
+    async getKavenegarStatus(messageId) {
+        const url = `https://api.kavenegar.com/v1/${CONFIG.apiKey}/sms/status.json`;
+        const response = await axios.post(url, { messageid: messageId });
+        
+        return {
+            messageId,
+            status: response.data.entries[0]?.status,
+            statusText: response.data.entries[0]?.statustext
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 📊 Statistics
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Update statistics
+     * @param {string} type - sent or failed
+     * @param {string} template - Template name
+     */
+    updateStats(type, template = 'direct') {
+        if (type === 'sent') {
+            this.stats.totalSent++;
+        } else {
+            this.stats.totalFailed++;
+        }
+        
+        if (!this.stats.byProvider[this.provider]) {
+            this.stats.byProvider[this.provider] = { sent: 0, failed: 0 };
+        }
+        
+        this.stats.byProvider[this.provider][type === 'sent' ? 'sent' : 'failed']++;
+        
+        if (!this.stats.byTemplate[template]) {
+            this.stats.byTemplate[template] = { sent: 0, failed: 0 };
+        }
+        
+        this.stats.byTemplate[template][type === 'sent' ? 'sent' : 'failed']++;
+    }
+
+    /**
+     * Get statistics
+     * @returns {Object} Statistics
+     */
+    getStats() {
+        return {
+            ...this.stats,
+            successRate: this.stats.totalSent / 
+                (this.stats.totalSent + this.stats.totalFailed) * 100 || 0
+        };
+    }
+
+    /**
+     * Reset statistics
+     */
+    resetStats() {
+        this.stats = {
+            totalSent: 0,
+            totalFailed: 0,
+            totalQueued: 0,
+            byProvider: {},
+            byTemplate: {}
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🔌 Verify Connection
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Verify SMS service connection
+     * @returns {Promise<boolean>} Is connected
+     */
+    async verifyConnection() {
+        if (!CONFIG.apiKey && !CONFIG.mockMode) {
+            log.warn('SMS API key not configured');
+            return false;
+        }
+        
+        if (CONFIG.mockMode) {
+            log.success('SMS service running in mock mode');
+            return true;
+        }
+        
+        try {
+            const accountInfo = await this.getAccountInfo();
+            log.success(`SMS service connected. Balance: ${accountInfo.balance}`);
+            return true;
+        } catch (error) {
+            log.error(`SMS service verification failed: ${error.message}`);
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ⏱️ Utility Methods
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Delay helper
+     * @param {number} ms - Milliseconds
+     * @returns {Promise}
+     */
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Get message length (Unicode aware)
+     * @param {string} message - Message
+     * @returns {number} Length
+     */
+    getMessageLength(message) {
+        // GSM-7 single segment = 160 chars
+        // Unicode (Farsi) = 70 chars per segment
+        const isUnicode = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(message);
+        return isUnicode ? Math.ceil(message.length / 70) : Math.ceil(message.length / 160);
+    }
+
+    /**
+     * Split long message into segments
+     * @param {string} message - Message
+     * @returns {Array<string>} Segments
+     */
+    splitMessage(message) {
+        const isUnicode = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/.test(message);
+        const segmentLength = isUnicode ? 67 : 153; // Leave room for concatenation header
+        
+        const segments = [];
+        for (let i = 0; i < message.length; i += segmentLength) {
+            segments.push(message.substring(i, i + segmentLength));
+        }
+        
+        return segments;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 📤 Export Singleton Instance
+// ═══════════════════════════════════════════════════════════════════
+
+const smsService = new SMSService();
+
+module.exports = {
+    // Main service
+    sms: smsService,
+    
+    // Convenience methods
+    send: (options) => smsService.send(options),
+    sendBulk: (recipients, message) => smsService.sendBulk(recipients, message),
+    sendVerificationCode: (phone, code, type) => smsService.sendVerificationCode(phone, code, type),
+    sendTemplate: (phone, template, data) => smsService.sendTemplate(phone, template, data),
+    generateAndSendOTP: (phone, type, length) => smsService.generateAndSendOTP(phone, type, length),
+    verifyOTP: (phone, code, type) => smsService.verifyOTP(phone, code, type),
+    schedule: (options, date) => smsService.schedule(options, date),
+    getAccountInfo: () => smsService.getAccountInfo(),
+    getDeliveryStatus: (messageId) => smsService.getDeliveryStatus(messageId),
+    getStats: () => smsService.getStats(),
+    verifyConnection: () => smsService.verifyConnection(),
+    formatPhoneNumber: (phone) => smsService.formatPhoneNumber(phone),
+    validatePhoneNumber: (phone) => smsService.validatePhoneNumber(phone),
+    generateOTP: (length) => smsService.generateOTP(length),
+    
+    // Templates
+    templates: TEMPLATES,
+    
+    // Configuration
+    config: CONFIG,
+    
+    // Export class for extension
+    SMSService
+}; */

@@ -1,0 +1,24 @@
+const ROLE_PRIORITIES = Object.freeze({
+
+    SUPER_ADMIN: 1000,
+
+    ADMIN: 900,
+
+    SECURITY_OPERATOR: 850,
+
+    SYSTEM_OPERATOR: 800,
+
+    AUDITOR: 700,
+
+    SUPPORT: 600,
+
+    PROFESSOR: 500,
+
+    STUDENT: 300,
+
+    GUEST: 100,
+
+    ANONYMOUS: 0
+});
+
+module.exports = ROLE_PRIORITIES;

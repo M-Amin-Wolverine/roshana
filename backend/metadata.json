@@ -1,0 +1,6 @@
+{
+  "name": "Roshana Configuration Portal",
+  "description": "An interactive workspace, validator, and terminal console for the Roshana Enterprise Configuration Engine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

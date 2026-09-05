@@ -1,0 +1,123 @@
+# ===========================
+# OPERATING SYSTEMS
+# ===========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ===========================
+# EDITORS & IDEs
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+*.sublime-project
+*.sublime-workspace
+
+# ===========================
+# LANGUAGE-SPECIFIC
+# ===========================
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+
+# Java
+*.class
+*.log
+*.jar
+*.war
+*.ear
+target/
+build/
+
+# Ruby
+*.gem
+.bundle/
+vendor/bundle/
+Gemfile.lock
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+vendor/
+
+# Rust
+target/
+Cargo.lock
+
+# ===========================
+# BUILD OUTPUTS & COMPILERS
+# ===========================
+dist/
+out/
+build/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ===========================
+# ENV & SECRETS
+# ===========================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+credentials/
+
+# ===========================
+# LOGS & TEMP FILES
+# ===========================
+*.log
+logs/
+tmp/
+temp/
+*.temp
+
+# ===========================
+# DATABASES & CACHES
+# ===========================
+*.sqlite
+*.db
+*.mdb
+.cache/
+*.cache
+
+# ===========================
+# IMAGES & MEDIA (optional)
+# ===========================
+# *.jpg
+# *.png
+# !logo.png

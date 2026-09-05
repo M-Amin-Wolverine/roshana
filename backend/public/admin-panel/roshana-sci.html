@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت روشنا-سی | فرتاک</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🧠&lt;/text&gt;&lt;/svg&gt;">
+    
+    <!-- External Fonts & Libraries -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/roshana-sci-styles.css">
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">در حال بارگذاری...</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h3>روشنا-سی</h3>
+            <p>سامانه هوشمند دسترسی علمی</p>
+        </div>
+
+        <div class="sidebar-menu">
+            <a class="menu-item active" data-page="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>داشبورد</span>
+            </a>
+            <a class="menu-item" data-page="domains">
+                <i class="fas fa-globe"></i>
+                <span>مدیریت دامنه‌ها</span>
+            </a>
+            <a class="menu-item" data-page="policies">
+                <i class="fas fa-shield-alt"></i>
+                <span>سیاست‌های دسترسی</span>
+            </a>
+            <a class="menu-item" data-page="logs">
+                <i class="fas fa-history"></i>
+                <span>لاگ دسترسی‌ها</span>
+            </a>
+            <a class="menu-item" data-page="anomalies">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>ناهنجاری‌ها</span>
+            </a>
+
+            <div class="menu-divider"></div>
+
+            <a class="menu-item" data-page="reports">
+                <i class="fas fa-chart-bar"></i>
+                <span>گزارش‌ها</span>
+            </a>
+            <a class="menu-item" data-page="users">
+                <i class="fas fa-users-cog"></i>
+                <span>مدیریت کاربران</span>
+            </a>
+            <a class="menu-item" data-page="settings">
+                <i class="fas fa-cog"></i>
+                <span>تنظیمات</span>
+            </a>
+
+            <div class="menu-divider"></div>
+
+            <a class="menu-item" data-page="help">
+                <i class="fas fa-question-circle"></i>
+                <span>راهنما</span>
+            </a>
+            <a class="menu-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>خروج</span>
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="realtime-indicator">
+                <span class="dot"></span>
+                <span>اتصال برقرار</span>
+            </div>
+            <span style="font-size: 10px; opacity: 0.5; margin-top: 5px; display: block;">نسخه 2.0.0</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div class="navbar-right">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearch" placeholder="جستجوی سریع در دامنه‌ها، کاربران و لاگ‌ها...">
+                </div>
+            </div>
+            <div class="navbar-left">
+                <button class="nav-btn" onclick="toggleTheme()" title="تغییر تم">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <button class="nav-btn" onclick="refreshData()" title="بروزرسانی">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="nav-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notificationBadge">3</span>
+                </button>
+                <div class="user-profile" onclick="showUserMenu()">
+                    <div class="user-avatar" id="userAvatar">آ</div>
+                    <div class="user-info">
+                        <h6 id="userName">ادمین سیستم</h6>
+                        <p id="userRole">مدیر ارشد</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             DASHBOARD PAGE
+        ============================================ -->
+        <div id="page-dashboard" class="page active">
+            <!-- Quick Stats Bar -->
+            <div class="quick-stats">
+                <div class="quick-stat">
+                    <div class="icon" style="background: #dcfce7; color: #16a34a;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div>
+                        <div class="value" id="quickSuccessRate">98.5%</div>
+                        <div class="label">نرخ موفقیت</div>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <div class="icon" style="background: #dbeafe; color: #2563eb;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div>
+                        <div class="value" id="quickAvgResponse">45ms</div>
+                        <div class="label">میانگین پاسخ</div>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <div class="icon" style="background: #fef3c7; color: #d97706;">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div>
+                        <div class="value" id="quickDomains">1,245</div>
+                        <div class="label">دامنه فعال</div>
+                    </div>
+                </div>
+                <div class="quick-stat">
+                    <div class="icon" style="background: #f3e8ff; color: #9333ea;">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div>
+                        <div class="value" id="quickPolicies">12</div>
+                        <div class="label">سیاست فعال</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h1>داشبورد</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>داشبورد</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="exportDashboard()">
+                        <i class="fas fa-download"></i>
+                        خروجی PDF
+                    </button>
+                    <button class="btn btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i>
+                        بروزرسانی
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsContainer"></div>
+
+            <!-- Charts Row 1 -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="icon">
+                                <i class="fas fa-chart-area"></i>
+                            </div>
+                            <h5>ترافیک روزانه</h5>
+                        </div>
+                        <div class="chart-actions">
+                            <button onclick="changeTrafficPeriod('day')" title="روز"><i class="fas fa-calendar-day"></i></button>
+                            <button onclick="changeTrafficPeriod('week')" title="هفته"><i class="fas fa-calendar-week"></i></button>
+                            <button onclick="changeTrafficPeriod('month')" title="ماه"><i class="fas fa-calendar-alt"></i></button>
+                        </div>
+                    </div>
+                    <div id="trafficChart"></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <h5>وضعیت دسترسی‌ها</h5>
+                        </div>
+                    </div>
+                    <div id="statusChart"></div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div class="charts-grid charts-grid-equal">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="icon">
+                                <i class="fas fa-globe-americas"></i>
+                            </div>
+                            <h5>پربازدیدترین دامنه‌ها</h5>
+                        </div>
+                    </div>
+                    <div id="topDomainsChart"></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">
+                            <div class="icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h5>پرمصرف‌ترین کاربران</h5>
+                        </div>
+                    </div>
+                    <div id="topUsersChart"></div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Table -->
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-clock" style="color: var(--primary-color);"></i>
+                        <h5>فعالیت‌های اخیر</h5>
+                    </div>
+                    <div class="table-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="viewAllActivity()">
+                            مشاهده همه
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                    </div>
+                </div>
+                <table id="recentActivityTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>زمان</th>
+                            <th>کاربر</th>
+                            <th>دستور</th>
+                            <th>جزئیات</th>
+                            <th>IP</th>
+                            <th>وضعیت</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentActivityBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================
+             DOMAINS PAGE
+        ============================================ -->
+        <div id="page-domains" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <h1>مدیریت دامنه‌ها</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>دامنه‌ها</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="importDomains()">
+                        <i class="fas fa-upload"></i>
+                        ورود CSV
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportDomains()">
+                        <i class="fas fa-download"></i>
+                        خروجی Excel
+                    </button>
+                    <button class="btn btn-primary" onclick="showAddDomainModal()">
+                        <i class="fas fa-plus"></i>
+                        افزودن دامنه
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-bar">
+                <div class="filter-group">
+                    <label>جستجو</label>
+                    <input type="text" id="domainSearch" placeholder="نام یا دامنه...">
+                </div>
+                <div class="filter-group">
+                    <label>دسته‌بندی</label>
+                    <select id="domainCategoryFilter">
+                        <option value="">همه</option>
+                        <option value="academic">پایگاه علمی</option>
+                        <option value="journal">ژورنال</option>
+                        <option value="database">دیتابیس</option>
+                        <option value="publisher">ناشر</option>
+                        <option value="repository">مخزن</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>نوع دسترسی</label>
+                    <select id="domainAccessFilter">
+                        <option value="">همه</option>
+                        <option value="whitelist">لیست سفید</option>
+                        <option value="blacklist">لیست سیاه</option>
+                        <option value="graylist">لیست خاکستری</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>وضعیت</label>
+                    <select id="domainStatusFilter">
+                        <option value="">همه</option>
+                        <option value="active">فعال</option>
+                        <option value="inactive">غیرفعال</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="domainsTable" class="table table-striped" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAllDomains"></th>
+                            <th>دامنه</th>
+                            <th>نام فارسی</th>
+                            <th>دسته‌بندی</th>
+                            <th>نوع دسترسی</th>
+                            <th>درخواست‌ها</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================
+             POLICIES PAGE
+        ============================================ -->
+        <div id="page-policies" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div>
+                        <h1>سیاست‌های دسترسی</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>سیاست‌ها</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="showAddPolicyModal()">
+                        <i class="fas fa-plus"></i>
+                        ایجاد سیاست جدید
+                    </button>
+                </div>
+            </div>
+
+            <div class="filters-bar">
+                <div class="filter-group">
+                    <label>نوع سیاست</label>
+                    <select id="policyTypeFilter">
+                        <option value="">همه</option>
+                        <option value="time">محدودیت زمانی</option>
+                        <option value="bandwidth">پهنای باند</option>
+                        <option value="category">دسته‌بندی</option>
+                        <option value="keyword">کلمه کلیدی</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>اولویت</label>
+                    <select id="policyPriorityFilter">
+                        <option value="">همه</option>
+                        <option value="high">بالا</option>
+                        <option value="medium">متوسط</option>
+                        <option value="low">پایین</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="policiesList"></div>
+        </div>
+
+        <!-- ============================================
+             LOGS PAGE
+        ============================================ -->
+        <div id="page-logs" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div>
+                        <h1>لاگ دسترسی‌ها</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>لاگ‌ها</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="exportLogs()">
+                        <i class="fas fa-download"></i>
+                        خروجی
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearFilters()">
+                        <i class="fas fa-filter"></i>
+                        پاک کردن فیلترها
+                    </button>
+                </div>
+            </div>
+
+            <div class="filters-bar">
+                <div class="filter-group">
+                    <label>از تاریخ</label>
+                    <input type="date" id="logDateFrom">
+                </div>
+                <div class="filter-group">
+                    <label>تا تاریخ</label>
+                    <input type="date" id="logDateTo">
+                </div>
+                <div class="filter-group">
+                    <label>وضعیت</label>
+                    <select id="logStatusFilter">
+                        <option value="">همه</option>
+                        <option value="allow">مجاز</option>
+                        <option value="blocked">مسدود</option>
+                        <option value="anomaly">ناهنجاری</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>جستجو</label>
+                    <input type="text" id="logSearchInput" placeholder="URL، کاربر یا IP...">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-broadcast" style="color: var(--success);"></i>
+                        <h5>پخش زنده لاگ‌ها</h5>
+                        <span class="badge badge-success" id="liveLogBadge">
+                            <span class="dot" style="width: 6px; height: 6px;"></span>
+                            زنده
+                        </span>
+                    </div>
+                    <div class="table-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="toggleLiveLog()">
+                            <i class="fas fa-pause" id="liveLogIcon"></i>
+                            <span id="liveLogText">توقف</span>
+                        </button>
+                    </div>
+                </div>
+                <table id="logsTable" class="table table-striped" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>زمان</th>
+                            <th>کاربر</th>
+                            <th>دامنه/URL</th>
+                            <th>روش</th>
+                            <th>وضعیت</th>
+                            <th>زمان پاسخ</th>
+                            <th>حجم</th>
+                            <th>IP</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================
+             ANOMALIES PAGE
+        ============================================ -->
+        <div id="page-anomalies" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                        <i class="fas fa-exclamation-triangle" style="color: #d97706;"></i>
+                    </div>
+                    <div>
+                        <h1>رویدادهای ناهنجار</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>ناهنجاری‌ها</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" onclick="runAnomalyScan()">
+                        <i class="fas fa-search"></i>
+                        اسکن دستی
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon red">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <span class="badge badge-danger">بحرانی</span>
+                    </div>
+                    <div class="stat-value" id="criticalAnomalies">0</div>
+                    <div class="stat-label">ناهنجاری بحرانی</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <span class="badge badge-warning">هشدار</span>
+                    </div>
+                    <div class="stat-value" id="warningAnomalies">0</div>
+                    <div class="stat-label">ناهنجاری هشدار</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <span class="badge badge-info">اطلاع</span>
+                    </div>
+                    <div class="stat-value" id="infoAnomalies">0</div>
+                    <div class="stat-label">ناهنجاری اطلاع‌رسانی</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon green">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <span class="badge badge-success">بررسی شده</span>
+                    </div>
+                    <div class="stat-value" id="resolvedAnomalies">0</div>
+                    <div class="stat-label">بررسی و رفع شده</div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="anomaliesTable" class="table table-striped" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>زمان</th>
+                            <th>نوع ناهنجاری</th>
+                            <th>شدت</th>
+                            <th>کاربر</th>
+                            <th>IP</th>
+                            <th>توضیحات</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="anomaliesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================
+             REPORTS PAGE
+        ============================================ -->
+        <div id="page-reports" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div>
+                        <h1>گزارش‌ها</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>گزارش‌ها</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="report-card" onclick="generateReport('traffic')">
+                        <div class="report-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5>گزارش ترافیک</h5>
+                        <p>آمار کامل ترافیک سایت شامل درخواست‌ها، پهنای باند و الگوهای استفاده</p>
+                        <button class="btn btn-sm btn-primary w-100">
+                            <i class="fas fa-file-alt"></i>
+                            تولید گزارش
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="report-card" onclick="generateReport('security')">
+                        <div class="report-icon" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h5>گزارش امنیتی</h5>
+                        <p>رویدادهای امنیتی، تلاش‌های نفوذ و تهدیدات شناسایی شده</p>
+                        <button class="btn btn-sm btn-primary w-100">
+                            <i class="fas fa-file-alt"></i>
+                            تولید گزارش
+                        </button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="report-card" onclick="generateReport('user')">
+                        <div class="report-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h5>گزارش کاربران</h5>
+                        <p>رفتار کاربران، زمان استفاده و الگوهای دسترسی</p>
+                        <button class="btn btn-sm btn-primary w-100">
+                            <i class="fas fa-file-alt"></i>
+                            تولید گزارش
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <div class="icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <h5>زمان پاسخ سرور</h5>
+                            </div>
+                        </div>
+                        <div id="responseTimeChart"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <div class="icon">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                                <h5>دسته‌بندی دامنه‌ها</h5>
+                            </div>
+                        </div>
+                        <div id="categoryChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             USERS PAGE
+        ============================================ -->
+        <div id="page-users" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div>
+                        <h1>مدیریت کاربران</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>کاربران</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-primary" onclick="showAddUserModal()">
+                        <i class="fas fa-user-plus"></i>
+                        افزودن کاربر
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="usersTable" class="table table-striped" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>کاربر</th>
+                            <th>ایمیل</th>
+                            <th>نقش</th>
+                            <th>آخرین فعالیت</th>
+                            <th>دسترسی‌ها</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================
+             SETTINGS PAGE
+        ============================================ -->
+        <div id="page-settings" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div>
+                        <h1>تنظیمات</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>تنظیمات</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="settings-section">
+                        <h5><i class="fas fa-cog"></i> تنظیمات عمومی</h5>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>حالت تعمیر</h6>
+                                <p>فعال‌سازی حالت تعمیر و نمایش صفحه maintenance</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="maintenanceMode">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>ثبت لاگ دسترسی‌ها</h6>
+                                <p>ذخیره تمام درخواست‌های کاربران برای بررسی</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="logAccess" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>تشخیص ناهنجاری خودکار</h6>
+                                <p>فعال‌سازی سیستم تشخیص ناهنجاری با یادگیری ماشین</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoAnomalyDetection" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h5><i class="fas fa-bell"></i> تنظیمات اعلان‌ها</h5>
+                        
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>اعلان بحرانی‌ها</h6>
+                                <p>ارسال اعلان برای ناهنجاری‌های بحرانی</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="criticalAlerts" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>گزارش روزانه</h6>
+                                <p>ارسال خلاصه عملکرد روزانه به ایمیل مدیر</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="dailyReport">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="settings-section">
+                        <h5><i class="fas fa-server"></i> اطلاعات سیستم</h5>
+                        <div class="setting-item" style="border: none;">
+                            <div class="setting-info">
+                                <h6>نسخه سیستم</h6>
+                                <p>2.0.0</p>
+                            </div>
+                        </div>
+                        <div class="setting-item" style="border: none;">
+                            <div class="setting-info">
+                                <h6>آخرین بروزرسانی</h6>
+                                <p>۱۴۰۳/۰۱/۲۵</p>
+                            </div>
+                        </div>
+                        <div class="setting-item" style="border: none;">
+                            <div class="setting-info">
+                                <h6>موقعیت سرور</h6>
+                                <p>تهران، ایران</p>
+                            </div>
+                        </div>
+                        <div class="setting-item" style="border: none;">
+                            <div class="setting-info">
+                                <h6>Uptime</h6>
+                                <p>۴۵ روز، ۱۲ ساعت</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary w-100 mt-3" onclick="checkForUpdates()">
+                            <i class="fas fa-sync"></i>
+                            بررسی بروزرسانی
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             HELP PAGE
+        ============================================ -->
+        <div id="page-help" class="page">
+            <div class="page-header">
+                <div class="page-title">
+                    <div class="icon" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">
+                        <i class="fas fa-question-circle" style="color: #2563eb;"></i>
+                    </div>
+                    <div>
+                        <h1>راهنما و پشتیبانی</h1>
+                        <div class="breadcrumb">
+                            <a href="#"><i class="fas fa-home"></i></a>
+                            <span>/</span>
+                            <span>راهنما</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="settings-section">
+                        <h5><i class="fas fa-book"></i> مستندات</h5>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>راهنمای شروع سریع</h6>
+                                <p>نحوه راه‌اندازی اولیه سیستم</p>
+                            </div>
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>مدیریت دامنه‌ها</h6>
+                                <p>آموزش افزودن و ویرایش دامنه‌ها</p>
+                            </div>
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <h6>سیاست‌های دسترسی</h6>
+                                <p>ایجاد و مدیریت سیاست‌ها</p>
+                            </div>
+                            <button class="btn btn-sm btn-secondary">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="settings-section">
+                        <h5><i class="fas fa-headset"></i> پشتیبانی</h5>
+                        <div class="setting-item" style="border: none;">
+                            <div class="setting-info">
+                                <h6>ایمیل پشتیبانی</h6>
+                                <p>support@faratak.ir</p>
+                            </div>
+                        </div>
+                        <div class="setting-item" style="border: none;">
+                            <div class="setting-info">
+                                <h6>تلفن تماس</h6>
+                                <p>۰۲۱-۹۱۰۰۹۱۰۰</p>
+                            </div>
+                        </div>
+                        <div class="setting-item" style="border: none;">
+                            <div class="setting-info">
+                                <h6>ساعات کاری</h6>
+                                <p>شنبه تا پنج‌شنبه، ۸ صبح تا ۵ عصر</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" onclick="openSupportChat()">
+                            <i class="fas fa-comments"></i>
+                            گفتگوی آنلاین
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         MODALS
+    ============================================ -->
+    
+    <!-- Add Domain Modal -->
+    <div class="modal fade" id="addDomainModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-plus-circle"></i> افزودن دامنه جدید</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addDomainForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">دامنه <span class="text-danger">*</span></label>
+                                    <input type="text" name="domain" class="form-control" placeholder="example.com" required>
+                                    <small class="text-muted">بدون http:// یا https://</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">نام فارسی <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control" placeholder="نام دامنه" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">دسته‌بندی</label>
+                                    <select name="category" class="form-select">
+                                        <option value="academic">پایگاه علمی</option>
+                                        <option value="journal">ژورنال</option>
+                                        <option value="database">دیتابیس</option>
+                                        <option value="publisher">ناشر</option>
+                                        <option value="repository">مخزن</option>
+                                        <option value="search">موتور جستجو</option>
+                                        <option value="other">سایر</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">نوع دسترسی</label>
+                                    <select name="access_type" class="form-select">
+                                        <option value="whitelist">⚪ لیست سفید (مجاز)</option>
+                                        <option value="blacklist">⚫ لیست سیاه (ممنوع)</option>
+                                        <option value="graylist">🟡 لیست خاکستری (نیاز به بررسی)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">توضیحات</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="توضیحات اضافی..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">تگ‌ها</label>
+                            <input type="text" name="tags" class="form-control" placeholder="برچسب1، برچسب2، ...">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="addDomain()">
+                        <i class="fas fa-save"></i> ذخیره
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Domain Modal -->
+    <div class="modal fade" id="editDomainModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-edit"></i> ویرایش دامنه</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDomainForm">
+                        <input type="hidden" name="id" id="editDomainId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">دامنه <span class="text-danger">*</span></label>
+                                    <input type="text" name="domain" id="editDomainName" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">نام فارسی <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" id="editDomainDisplayName" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">دسته‌بندی</label>
+                                    <select name="category" id="editDomainCategory" class="form-select">
+                                        <option value="academic">پایگاه علمی</option>
+                                        <option value="journal">ژورنال</option>
+                                        <option value="database">دیتابیس</option>
+                                        <option value="publisher">ناشر</option>
+                                        <option value="repository">مخزن</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">نوع دسترسی</label>
+                                    <select name="access_type" id="editDomainAccessType" class="form-select">
+                                        <option value="whitelist">لیست سفید (مجاز)</option>
+                                        <option value="blacklist">لیست سیاه (ممنوع)</option>
+                                        <option value="graylist">لیست خاکستری</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">وضعیت</label>
+                                    <select name="is_active" id="editDomainStatus" class="form-select">
+                                        <option value="1">فعال</option>
+                                        <option value="0">غیرفعال</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">توضیحات</label>
+                            <textarea name="description" id="editDomainDescription" class="form-control" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="updateDomain()">
+                        <i class="fas fa-save"></i> ذخیره تغییرات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Policy Modal -->
+    <div class="modal fade" id="addPolicyModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-shield-alt"></i> ایجاد سیاست جدید</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPolicyForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">نام سیاست <span class="text-danger">*</span></label>
+                                    <input type="text" name="name" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">نوع سیاست</label>
+                                    <select name="type" class="form-select">
+                                        <option value="time">محدودیت زمانی</option>
+                                        <option value="bandwidth">پهنای باند</option>
+                                        <option value="category">دسته‌بندی</option>
+                                        <option value="keyword">کلمه کلیدی</option>
+                                        <option value="ip">محدودیت IP</option>
+                                        <option value="user">محدودیت کاربری</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اولویت</label>
+                                    <select name="priority" class="form-select">
+                                        <option value="high">🔴 بالا</option>
+                                        <option value="medium" selected>🟡 متوسط</option>
+                                        <option value="low">🟢 پایین</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">وضعیت</label>
+                                    <select name="is_active" class="form-select">
+                                        <option value="1">فعال</option>
+                                        <option value="0">غیرفعال</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">توضیحات</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="توضیحات سیاست..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">قوانین سیاست</label>
+                            <div id="policyRulesContainer">
+                                <div class="input-group mb-2">
+                                    <input type="text" name="rules[]" class="form-control" placeholder="قانون ۱">
+                                    <button type="button" class="btn btn-danger" onclick="removeRule(this)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="addRule()">
+                                <i class="fas fa-plus"></i> افزودن قانون
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="addPolicy()">
+                        <i class="fas fa-save"></i> ایجاد سیاست
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus"></i> افزودن کاربر جدید</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">نام کامل <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ایمیل <span class="text-danger">*</span></label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">رمز عبور <span class="text-danger">*</span></label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">نقش</label>
+                            <select name="role" class="form-select">
+                                <option value="user">کاربر عادی</option>
+                                <option value="operator">اپراتور</option>
+                                <option value="admin">مدیر</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">توضیحات</label>
+                            <textarea name="description" class="form-control" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="addUser()">
+                        <i class="fas fa-save"></i> افزودن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-danger"></i> تأیید حذف</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>آیا از حذف این آیتم اطمینان دارید؟</p>
+                    <p class="text-muted small">این عمل قابل بازگشت نیست.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Log Details Modal -->
+    <div class="modal fade" id="viewLogModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-search"></i> جزئیات لاگ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">زمان</label>
+                                <p id="logDetailTime">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">کاربر</label>
+                                <p id="logDetailUser">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">IP</label>
+                                <p id="logDetailIp">-</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">وضعیت</label>
+                                <p id="logDetailStatus">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">URL</label>
+                        <p id="logDetailUrl" class="text-break">-</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">User Agent</label>
+                        <p id="logDetailUserAgent" class="text-break small text-muted">-</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> بستن
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import CSV Modal -->
+    <div class="modal fade" id="importCsvModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-upload"></i> ورود فایل CSV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">فایل CSV</label>
+                        <input type="file" id="csvFileInput" class="form-control" accept=".csv">
+                        <small class="text-muted">فرمت مجاز: CSV با کدگذاری UTF-8</small>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        ستون‌های مورد نیاز: domain, name, category, access_type
+                    </div>
+                    <a href="#" class="btn btn-sm btn-secondary" download>
+                        <i class="fas fa-download"></i> دانلود نمونه فایل
+                    </a>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> انصراف
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="importCsvFile()">
+                        <i class="fas fa-upload"></i> ورود فایل
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.3/dist/sweetalert2.all.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="/static/js/roshana-sci-script.js"></script>
+</body>
+</html>

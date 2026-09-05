@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت دیتابیس فرتاک</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'vazir': ['Vazir', 'Tahoma', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazir:wght@300;400;500;700&display=swap');
+        * { font-family: 'Vazir', 'Tahoma', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .sidebar { background: #1a1a2e; transition: all 0.3s; }
+        .sidebar .nav-link { color: #aaa; transition: 0.3s; border-radius: 10px; margin: 5px 10px; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .card-stats { background: white; border-radius: 20px; transition: transform 0.3s, box-shadow 0.3s; }
+        .card-stats:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .table-container { background: white; border-radius: 20px; padding: 20px; margin-top: 20px; }
+        .btn-action { margin: 0 5px; transition: all 0.2s; }
+        .btn-action:hover { transform: scale(1.05); }
+        .modal-header { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body class="font-vazir">
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar min-vh-100 p-3">
+                <div class="text-center py-4 border-bottom border-secondary mb-3">
+                    <i class="fas fa-database fa-3x text-white"></i>
+                    <h5 class="text-white mt-2">مدیریت دیتابیس</h5>
+                    <span class="badge bg-info mt-1">v2.0</span>
+                </div>
+                <nav class="nav flex-column">
+                    <a class="nav-link py-3 px-3 mb-2" href="#" onclick="showDashboard()">
+                        <i class="fas fa-chart-line me-2"></i> داشبورد
+                    </a>
+                    <a class="nav-link py-3 px-3 mb-2" href="#" onclick="showTables()">
+                        <i class="fas fa-table me-2"></i> جداول
+                    </a>
+                    <a class="nav-link py-3 px-3 mb-2" href="#" onclick="showRelations()">
+                        <i class="fas fa-project-diagram me-2"></i> روابط
+                    </a>
+                    <a class="nav-link py-3 px-3 mb-2" href="#" onclick="showQuery()">
+                        <i class="fas fa-terminal me-2"></i> کوئری دلخواه
+                    </a>
+                    <a class="nav-link py-3 px-3 mb-2" href="#" onclick="backupDatabase()">
+                        <i class="fas fa-download me-2"></i> بکاپ
+                    </a>
+                    <hr class="bg-secondary my-3">
+                    <a class="nav-link py-3 px-3 mb-2" href="/">
+                        <i class="fas fa-home me-2"></i> بازگشت به سایت
+                    </a>
+                </nav>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 p-4">
+                <div id="mainContent">
+                    <div class="text-center text-white py-5">
+                        <i class="fas fa-spinner fa-spin fa-3x"></i>
+                        <p class="mt-3">در حال بارگذاری پنل مدیریت...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit -->
+    <div class="modal fade" id="dataModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">عنوان</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dataForm">
+                        <div id="formFields"></div>
+                        <input type="hidden" id="recordId">
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="button" class="btn btn-primary" onclick="submitForm()">ذخیره</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Query -->
+    <div class="modal fade" id="queryModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">اجرای کوئری دلخواه (فقط SELECT)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="queryInput" class="form-control font-monospace" rows="5" placeholder="SELECT * FROM users LIMIT 10"></textarea>
+                    <div id="queryResult" class="mt-3"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="executeQuery()">
+                        <i class="fas fa-play"></i> اجرا
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentTable = '';
+        let currentColumns = [];
+        let isEditMode = false;
+        
+        // ========== توابع اصلی ==========
+        
+        async function apiCall(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: { 'Content-Type': 'application/json', ...options.headers }
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                return data;
+            } catch (error) {
+                showToast(error.message, 'error');
+                throw error;
+            }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = $(`
+                <div class="toast align-items-center text-white bg-${type === 'error' ? 'danger' : 'success'} border-0 position-fixed bottom-0 end-0 m-3" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `);
+            $('body').append(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // ========== داشبورد ==========
+        
+        async function showDashboard() {
+            $('#mainContent').html(`
+                <div class="text-center text-white py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p class="mt-3">در حال بارگذاری داشبورد...</p>
+                </div>
+            `);
+            
+            try {
+                const stats = await apiCall('/admin/stats');
+                
+                let html = `
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card-stats p-4">
+                                <h3><i class="fas fa-chart-line text-primary"></i> داشبورد مدیریت</h3>
+                                <hr>
+                                <div class="row mt-4">
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card text-center p-4 shadow-sm">
+                                            <i class="fas fa-database fa-3x text-primary"></i>
+                                            <h2 class="mt-2">${stats.stats.totalTables}</h2>
+                                            <p class="text-muted">جدول</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card text-center p-4 shadow-sm">
+                                            <i class="fas fa-rows fa-3x text-success"></i>
+                                            <h2 class="mt-2">${stats.stats.totalRows.toLocaleString()}</h2>
+                                            <p class="text-muted">کل رکوردها</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card text-center p-4 shadow-sm">
+                                            <i class="fas fa-chart-simple fa-3x text-info"></i>
+                                            <h2 class="mt-2">${stats.stats.tables.filter(t => t.rowCount > 0).length}</h2>
+                                            <p class="text-muted">جدول‌های غیر خالی</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <h5><i class="fas fa-list"></i> لیست جدول‌ها</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr><th>#</th><th>نام جدول</th><th>تعداد رکورد</th><th>عملیات</th></tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                stats.stats.tables.forEach((t, i) => {
+                    html += `<tr>
+                        <td>${i+1}</td>
+                        <td><strong>${t.name}</strong> <span class="badge bg-secondary">${t.rowCount} رکورد</span></td>
+                        <td>${t.rowCount.toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="viewTable('${t.name}')">
+                                <i class="fas fa-eye"></i> مشاهده
+                            </button>
+                         </td>
+                    </tr>`;
+                });
+                
+                html += `</tbody> </table> </div> </div>`;
+                $('#mainContent').html(html);
+            } catch (err) {
+                $('#mainContent').html(`<div class="alert alert-danger">خطا: ${err.message}</div>`);
+            }
+        }
+        
+        // ========== مدیریت جدول‌ها ==========
+        
+        async function showTables() {
+            $('#mainContent').html(`
+                <div class="text-center text-white py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p class="mt-3">در حال بارگذاری جدول‌ها...</p>
+                </div>
+            `);
+            
+            try {
+                const data = await apiCall('/admin/tables');
+                
+                let html = `
+                    <div class="table-container">
+                        <h5><i class="fas fa-table"></i> تمام جدول‌های دیتابیس (${data.tables.length} جدول)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr><th>#</th><th>نام جدول</th><th>عملیات</th></tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                data.tables.forEach((t, i) => {
+                    html += `<tr>
+                        <td>${i+1}</td>
+                        <td><strong>${t.name}</strong></td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="viewTable('${t.name}')">
+                                <i class="fas fa-eye"></i> مشاهده
+                            </button>
+                            <button class="btn btn-sm btn-success" onclick="exportTable('${t.name}')">
+                                <i class="fas fa-download"></i> خروجی
+                            </button>
+                         </td>
+                    </tr>`;
+                });
+                
+                html += `</tbody> </table> </div> </div>`;
+                $('#mainContent').html(html);
+            } catch (err) {
+                $('#mainContent').html(`<div class="alert alert-danger">خطا: ${err.message}</div>`);
+            }
+        }
+        
+        async function viewTable(tableName) {
+            currentTable = tableName;
+            $('#mainContent').html(`
+                <div class="text-center text-white py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p class="mt-3">در حال بارگذاری جدول ${tableName}...</p>
+                </div>
+            `);
+            
+            try {
+                const data = await apiCall(`/admin/table/${tableName}`);
+                
+                let html = `
+                    <div class="table-container">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                            <h5><i class="fas fa-table"></i> جدول: ${tableName}</h5>
+                            <div>
+                                <button class="btn btn-success" onclick="showAddRecord()">
+                                    <i class="fas fa-plus"></i> افزودن رکورد جدید
+                                </button>
+                                <button class="btn btn-secondary" onclick="showTables()">
+                                    <i class="fas fa-arrow-right"></i> بازگشت
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> تعداد کل رکوردها: ${data.totalCount.toLocaleString()} | صفحه ${data.currentPage} از ${data.totalPages}
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                `;
+                
+                for (const col of data.columns) {
+                    html += `<th>${col.name}<br><small class="text-muted">${col.type || 'TEXT'}</small></th>`;
+                }
+                html += `<th>عملیات</th> </thead> <tbody>`;
+                
+                for (const row of data.rows) {
+                    html += '<tr>';
+                    for (const col of data.columns) {
+                        let val = row[col.name];
+                        if (val === null || val === undefined) val = '<span class="text-muted">NULL</span>';
+                        else if (typeof val === 'object') val = JSON.stringify(val).substring(0, 50);
+                        else if (String(val).length > 100) val = String(val).substring(0, 100) + '...';
+                        html += `<td class="align-middle">${val}</td>`;
+                    }
+                    html += `<td class="align-middle">
+                        <button class="btn btn-sm btn-warning btn-action" onclick='editRecord(${JSON.stringify(row)})'>
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger btn-action" onclick="deleteRecord(${row.id || Object.values(row)[0]})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td></tr>`;
+                }
+                
+                html += `</tbody> </table> </div>
+                        <div class="mt-3 d-flex justify-content-between">
+                            <button class="btn btn-secondary" onclick="viewTable('${tableName}', ${data.currentPage - 1})" ${data.currentPage === 1 ? 'disabled' : ''}>
+                                قبلی
+                            </button>
+                            <span>صفحه ${data.currentPage} از ${data.totalPages}</span>
+                            <button class="btn btn-secondary" onclick="viewTable('${tableName}', ${data.currentPage + 1})" ${data.currentPage === data.totalPages ? 'disabled' : ''}>
+                                بعدی
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                currentColumns = data.columns;
+            } catch (err) {
+                $('#mainContent').html(`<div class="alert alert-danger">خطا: ${err.message}</div>`);
+            }
+        }
+        
+        // ========== CRUD عملیات ==========
+        
+        function showAddRecord() {
+            isEditMode = false;
+            $('#modalTitle').text(`افزودن رکورد جدید به ${currentTable}`);
+            
+            let html = '';
+            for (const col of currentColumns) {
+                if (col.pk === 1 && col.name === 'id') continue;
+                html += `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">${col.name}</label>
+                        <input type="text" class="form-control" name="${col.name}" placeholder="مقدار ${col.name} را وارد کنید">
+                        <small class="text-muted">نوع: ${col.type || 'TEXT'}</small>
+                    </div>
+                `;
+            }
+            $('#formFields').html(html);
+            $('#recordId').val('');
+            new bootstrap.Modal(document.getElementById('dataModal')).show();
+        }
+        
+        function editRecord(row) {
+            isEditMode = true;
+            $('#modalTitle').text(`ویرایش رکورد در ${currentTable}`);
+            
+            let html = '';
+            for (const col of currentColumns) {
+                if (col.pk === 1 && col.name === 'id') continue;
+                let val = row[col.name];
+                if (val === null) val = '';
+                html += `
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">${col.name}</label>
+                        <input type="text" class="form-control" name="${col.name}" value="${String(val).replace(/"/g, '&quot;')}">
+                    </div>
+                `;
+            }
+            $('#formFields').html(html);
+            $('#recordId').val(row.id || Object.values(row)[0]);
+            new bootstrap.Modal(document.getElementById('dataModal')).show();
+        }
+        
+        async function submitForm() {
+            const formData = {};
+            for (const col of currentColumns) {
+                if (col.pk === 1 && col.name === 'id') continue;
+                formData[col.name] = $(`[name="${col.name}"]`).val();
+            }
+            
+            const url = isEditMode ? 
+                `/admin/table/${currentTable}/${$('#recordId').val()}` :
+                `/admin/table/${currentTable}`;
+            
+            const method = isEditMode ? 'PUT' : 'POST';
+            
+            try {
+                await apiCall(url, { method, body: JSON.stringify(formData) });
+                bootstrap.Modal.getInstance(document.getElementById('dataModal')).hide();
+                showToast(isEditMode ? 'رکورد با موفقیت ویرایش شد' : 'رکورد با موفقیت اضافه شد');
+                viewTable(currentTable);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+        
+        async function deleteRecord(id) {
+            if (!confirm('⚠️ آیا از حذف این رکورد اطمینان دارید؟ این عمل غیرقابل بازگشت است!')) return;
+            
+            try {
+                await apiCall(`/admin/table/${currentTable}/${id}`, { method: 'DELETE' });
+                showToast('رکورد با موفقیت حذف شد');
+                viewTable(currentTable);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+        
+        // ========== روابط ==========
+        
+        async function showRelations() {
+            $('#mainContent').html(`
+                <div class="text-center text-white py-5">
+                    <i class="fas fa-spinner fa-spin fa-3x"></i>
+                    <p class="mt-3">در حال بارگذاری روابط...</p>
+                </div>
+            `);
+            
+            try {
+                const data = await apiCall('/admin/relations');
+                
+                let html = `<div class="table-container">
+                    <h5><i class="fas fa-project-diagram"></i> روابط بین جداول</h5>`;
+                
+                if (data.relations.length === 0) {
+                    html += `<div class="alert alert-info">هیچ رابطه‌ای بین جداول یافت نشد</div>`;
+                } else {
+                    html += `<div class="list-group">`;
+                    for (const r of data.relations) {
+                        html += `
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-table text-primary"></i>
+                                    <strong>${r.from.table}</strong>.<span class="text-danger">${r.from.column}</span>
+                                    <i class="fas fa-arrow-right mx-2"></i>
+                                    <i class="fas fa-table text-success"></i>
+                                    <strong>${r.to.table}</strong>.<span class="text-info">${r.to.column}</span>
+                                </div>
+                                <span class="badge bg-info">ForeignKey</span>
+                            </div>
+                        `;
+                    }
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+                $('#mainContent').html(html);
+            } catch (err) {
+                $('#mainContent').html(`<div class="alert alert-danger">خطا: ${err.message}</div>`);
+            }
+        }
+        
+        // ========== کوئری ==========
+        
+        function showQuery() {
+            $('#queryModal').modal('show');
+            $('#queryResult').html('');
+        }
+        
+        async function executeQuery() {
+            const sql = $('#queryInput').val();
+            if (!sql.trim()) {
+                showToast('لطفاً کوئری خود را وارد کنید', 'error');
+                return;
+            }
+            
+            $('#queryResult').html('<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> در حال اجرا...</div>');
+            
+            try {
+                const data = await apiCall('/admin/query', {
+                    method: 'POST',
+                    body: JSON.stringify({ sql })
+                });
+                
+                if (data.result && data.result.length > 0) {
+                    let tableHtml = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> ${data.count} رکورد یافت شد
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead class="table-dark">
+                                    <tr>
+                    `;
+                    
+                    for (const key in data.result[0]) {
+                        tableHtml += `<th>${key}</th>`;
+                    }
+                    tableHtml += '</tr></thead><tbody>';
+                    
+                    for (const row of data.result.slice(0, 100)) {
+                        tableHtml += '<tr>';
+                        for (const val of Object.values(row)) {
+                            tableHtml += `<td>${val === null ? 'NULL' : String(val).substring(0, 100)}</td>`;
+                        }
+                        tableHtml += '</tr>';
+                    }
+                    tableHtml += '</tbody></table></div>';
+                    
+                    if (data.result.length > 100) {
+                        tableHtml += `<div class="alert alert-warning">فقط 100 رکورد اول نمایش داده شده است. کل رکوردها: ${data.result.length}</div>`;
+                    }
+                    
+                    $('#queryResult').html(tableHtml);
+                } else {
+                    $('#queryResult').html(`<div class="alert alert-warning">نتیجه‌ای یافت نشد</div>`);
+                }
+            } catch (err) {
+                $('#queryResult').html(`<div class="alert alert-danger">خطا: ${err.message}</div>`);
+            }
+        }
+        
+        // ========== بکاپ ==========
+        
+        function backupDatabase() {
+            if (confirm('آیا از تهیه بکاپ اطمینان دارید؟')) {
+                window.location.href = '/admin/backup';
+                showToast('بکاپ در حال تهیه است...');
+            }
+        }
+        
+        function exportTable(tableName) {
+            window.location.href = `/admin/export/${tableName}`;
+        }
+        
+        // ========== بارگذاری اولیه ==========
+        $(document).ready(() => {
+            showDashboard();
+        });
+    </script>
+</body>
+</html>

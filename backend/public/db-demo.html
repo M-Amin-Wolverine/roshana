@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🔧 SQLite Debug API | Ultimate Dashboard v4.0</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #3b82f6;
+      --accent-glow: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #8b5cf6;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --glass: rgba(255, 255, 255, 0.05);
+      --glow: 0 0 20px rgba(59,130,246,0.3);
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Tahoma', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+      background: radial-gradient(circle at 10% 20%, #0a0f1e, #030712);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+
+    /* fancy background animation */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.05"><path fill="none" stroke="white" stroke-width="0.5" d="M10 10 L90 10 M10 20 L90 20 M10 30 L90 30 M10 40 L90 40 M10 50 L90 50 M10 60 L90 60 M10 70 L90 70 M10 80 L90 80 M10 90 L90 90 M10 10 L10 90 M20 10 L20 90 M30 10 L30 90 M40 10 L40 90 M50 10 L50 90 M60 10 L60 90 M70 10 L70 90 M80 10 L80 90 M90 10 L90 90"/></svg>') repeat;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      backdrop-filter: blur(2px);
+    }
+
+    /* header with neon effect */
+    .header {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border-radius: 2rem;
+      padding: 1.8rem 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+      box-shadow: var(--glow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo h1 {
+      font-size: 1.9rem;
+      background: linear-gradient(135deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      background: var(--accent);
+      padding: 0.3rem 0.8rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      border-radius: 1.5rem;
+      padding: 1.2rem;
+      text-align: center;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 30px -15px rgba(0,0,0,0.5);
+      border-color: var(--accent);
+    }
+
+    .stat-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(145deg, #fff, var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .api-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .api-category {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border-radius: 1.5rem;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .category-header {
+      background: var(--primary-light);
+      padding: 1rem 1.5rem;
+      font-size: 1.4rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 2px solid var(--accent);
+      cursor: pointer;
+    }
+
+    .endpoint-list {
+      padding: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .endpoint-item {
+      background: var(--glass);
+      border-radius: 1rem;
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+      border-left: 3px solid transparent;
+      transition: 0.1s;
+    }
+
+    .endpoint-item:hover {
+      background: rgba(59,130,246,0.15);
+      border-left-color: var(--accent);
+    }
+
+    .method {
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 30px;
+      background: var(--primary);
+    }
+    .method.get { background: #0d9488; color: white; }
+    .method.post { background: #ea580c; }
+    .method.put { background: #0284c7; }
+    .method.delete { background: #dc2626; }
+    .method.patch { background: #7c3aed; }
+
+    .path {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      direction: ltr;
+      text-align: left;
+      flex: 1;
+    }
+
+    .desc {
+      font-size: 0.75rem;
+      color: var(--text);
+      opacity: 0.8;
+    }
+
+    .auth {
+      font-size: 0.65rem;
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 0.2rem 0.5rem;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: 0.1s;
+    }
+    .copy-btn:hover { color: var(--accent); }
+
+    .search-box {
+      background: var(--primary-light);
+      border: 1px solid var(--border);
+      border-radius: 3rem;
+      padding: 0.5rem 1.2rem;
+      width: 280px;
+      color: white;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #1e293b;
+      border-left: 4px solid var(--accent);
+      padding: 0.8rem 1.5rem;
+      border-radius: 1rem;
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      animation: fadeOut 2s forwards;
+      font-size: 0.9rem;
+    }
+
+    @keyframes fadeOut {
+      0% { opacity: 1; transform: translateY(0); }
+      70% { opacity: 1; }
+      100% { opacity: 0; visibility: hidden; transform: translateY(20px); }
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    @media (max-width: 700px) {
+      body { padding: 1rem; }
+      .api-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <h1>🔧 SQLite Debug API <span class="badge">Ultimate v4.0</span></h1>
+      <div style="font-size: 0.8rem; margin-top: 6px;">Complete Database Explorer & Management Suite</div>
+    </div>
+    <div>
+      <input type="text" id="searchInput" class="search-box" placeholder="🔍 جستجوی endpoint... (متد/مسیر)" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="stats-grid" id="statsPanel">
+    <div class="stat-card"><div class="stat-value" id="totalEndpoints">—</div><div>Endpoints</div></div>
+    <div class="stat-card"><div class="stat-value" id="totalCategories">—</div><div>Categories</div></div>
+    <div class="stat-card"><div class="stat-value" id="totalAuth">🔐</div><div>Auth Required</div></div>
+    <div class="stat-card"><div class="stat-value" id="apiStatus">✅</div><div>Live API</div></div>
+  </div>
+
+  <div id="apiGrid" class="api-grid"></div>
+  <footer>✨ SQLite Debug API v4.0 — Ultimate toolbox for developers | Powered by Express + SQLite3</footer>
+</div>
+
+<script>
+  // ================ کاملترین دیتای API (همانند کد بک‌اند شما) ================
+  const API_DATA = {
+    stats: { icon: "📊", endpoints: {
+      summary: { method: "GET", path: "/debug/stats", desc: "آمار خلاصه کل دیتابیس", auth: "admin" },
+      detailed: { method: "GET", path: "/debug/stats/detailed", desc: "آمار کامل هر جدول", auth: "admin" },
+      size: { method: "GET", path: "/debug/stats/size", desc: "اندازه جدول‌ها و مصرف دیسک", auth: "admin" },
+      health: { method: "GET", path: "/debug/stats/health", desc: "گزارش سلامت جدول‌ها", auth: "admin" },
+      realtime: { method: "GET", path: "/debug/stats/realtime", desc: "آمار لحظه‌ای", auth: "admin" },
+      growth: { method: "GET", path: "/debug/stats/growth", desc: "روند رشد جدول‌ها", auth: "admin" },
+      overview: { method: "GET", path: "/debug/stats/overview", desc: "نمای کلی از وضعیت دیتابیس", auth: "admin" },
+      connections: { method: "GET", path: "/debug/stats/connections", desc: "اتصالات فعال و history", auth: "admin" },
+      memory: { method: "GET", path: "/debug/stats/memory", desc: "مصرف حافظه", auth: "admin" },
+      cache: { method: "GET", path: "/debug/stats/cache", desc: "وضعیت cache", auth: "admin" },
+      locks: { method: "GET", path: "/debug/stats/locks", desc: "بسته‌های قفل", auth: "admin" }
+    } },
+    tables: { icon: "🗂️", endpoints: {
+      list: { method: "GET", path: "/debug/tables", desc: "لیست جدول‌ها و ویوها", auth: "admin" },
+      full: { method: "GET", path: "/debug/tables/full", desc: "لیست کامل با جزئیات", auth: "admin" },
+      summary: { method: "GET", path: "/debug/tables/:table", desc: "خلاصه یک جدول خاص", auth: "admin" },
+      info: { method: "GET", path: "/debug/tables/:table/info", desc: "اطلاعات کامل جدول", auth: "admin" },
+      columns: { method: "GET", path: "/debug/tables/:table/columns", desc: "لیست ستون‌های جدول", auth: "read" },
+      sizes: { method: "GET", path: "/debug/tables/:table/size", desc: "اندازه جدول و ایندکس‌ها", auth: "admin" },
+      fragments: { method: "GET", path: "/debug/tables/:table/fragments", desc: "تکه‌تکه شدگی جدول", auth: "admin" },
+      dependencies: { method: "GET", path: "/debug/tables/:table/deps", desc: "وابستگی‌های جدول", auth: "read" },
+      dependents: { method: "GET", path: "/debug/tables/:table/dependents", desc: "جدول‌های وابسته", auth: "read" },
+      create: { method: "POST", path: "/debug/tables", desc: "ساخت جدول جدید", auth: "super" },
+      rename: { method: "PUT", path: "/debug/tables/:table/rename", desc: "تغییر نام جدول", auth: "super" },
+      clone: { method: "POST", path: "/debug/tables/:table/clone", desc: "کپی جدول با داده‌ها", auth: "super" },
+      truncate: { method: "DELETE", path: "/debug/tables/:table/truncate", desc: "پاک کردن همه داده‌ها", auth: "super" },
+      drop: { method: "DELETE", path: "/debug/tables/:table", desc: "حذف جدول", auth: "super" }
+    } },
+    schema: { icon: "🏗️", endpoints: {
+      table: { method: "GET", path: "/debug/schema/:table", desc: "ساختار جدول", auth: "read" },
+      full: { method: "GET", path: "/debug/schema/:table/full", desc: "ساختار کامل با روابط", auth: "read" },
+      diff: { method: "GET", path: "/debug/schema/:table/diff", desc: "تفاوت با تعریف واقعی DB", auth: "admin" },
+      validate: { method: "POST", path: "/debug/schema/:table/validate", desc: "اعتبارسنجی ساختار", auth: "admin" },
+      migrate: { method: "PUT", path: "/debug/schema/:table/migrate", desc: "همسان‌سازی ساختار", auth: "super" },
+      migrations: { method: "GET", path: "/debug/migrations", desc: "لیست migrations اجرا شده", auth: "admin" },
+      migrationNew: { method: "POST", path: "/debug/migrations", desc: "اجرای migration جدید", auth: "super" },
+      migrationRoll: { method: "DELETE", path: "/debug/migrations/:id", desc: "برگشت یک migration", auth: "super" }
+    } },
+    data: { icon: "📄", endpoints: {
+      read: { method: "GET", path: "/debug/data/:table", desc: "خواندن داده (صفحه‌بندی + فیلتر)", auth: "read" },
+      count: { method: "GET", path: "/debug/data/:table/count", desc: "تعداد رکوردها", auth: "read" },
+      sample: { method: "GET", path: "/debug/data/:table/sample", desc: "نمونه تصادفی", auth: "read" },
+      row: { method: "GET", path: "/debug/row/:table/:id", desc: "خواندن یک رکورد", auth: "read" },
+      first: { method: "GET", path: "/debug/data/:table/first", desc: "اولین رکورد", auth: "read" },
+      last: { method: "GET", path: "/debug/data/:table/last", desc: "آخرین رکورد", auth: "read" },
+      insert: { method: "POST", path: "/debug/data/:table", desc: "درج رکورد جدید", auth: "write" },
+      insertBulk: { method: "POST", path: "/debug/data/:table/bulk", desc: "درج چند رکورد (batch)", auth: "write" },
+      upsert: { method: "PUT", path: "/debug/data/:table/upsert", desc: "درج یا بروزرسانی (upsert)", auth: "write" },
+      update: { method: "PUT", path: "/debug/data/:table/:id", desc: "بروزرسانی کامل", auth: "write" },
+      patch: { method: "PATCH", path: "/debug/data/:table/:id", desc: "بروزرسانی جزئی", auth: "write" },
+      delete: { method: "DELETE", path: "/debug/data/:table/:id", desc: "حذف یک رکورد", auth: "write" },
+      deleteBulk: { method: "DELETE", path: "/debug/data/:table/bulk", desc: "حذف چند رکورد", auth: "write" },
+      deleteWhere: { method: "DELETE", path: "/debug/data/:table/where", desc: "حذف با شرط", auth: "write" },
+      softDelete: { method: "DELETE", path: "/debug/data/:table/:id/soft", desc: "حذف نرم", auth: "write" },
+      restore: { method: "PATCH", path: "/debug/data/:table/:id/restore", desc: "بازگردانی حذف شده", auth: "write" },
+      duplicate: { method: "POST", path: "/debug/data/:table/:id/duplicate", desc: "کپی رکورد", auth: "write" },
+      batchUpdate: { method: "PATCH", path: "/debug/data/:table/batch", desc: "بروزرسانی دسته‌ای", auth: "write" }
+    } },
+    search: { icon: "🔍", endpoints: {
+      table: { method: "GET", path: "/debug/search/:table", desc: "جستجو در جدول", auth: "read" },
+      all: { method: "GET", path: "/debug/search/all", desc: "جستجو در همه جدول‌ها", auth: "read" },
+      advanced: { method: "GET", path: "/debug/search/:table/advanced", desc: "جستجوی پیشرفته (AND/OR/NOT)", auth: "read" },
+      fullText: { method: "GET", path: "/debug/search/:table/fulltext", desc: "جستجوی تمام‌متنی", auth: "read" },
+      fuzzy: { method: "GET", path: "/debug/search/:table/fuzzy", desc: "جستجوی تقریبی", auth: "read" },
+      regex: { method: "GET", path: "/debug/search/:table/regex", desc: "جستجو با عبارت باقاعده", auth: "read" },
+      filter: { method: "GET", path: "/debug/filter/:table", desc: "فیلتر پیشرفته", auth: "read" },
+      distinct: { method: "GET", path: "/debug/distinct/:table/:column", desc: "مقادیر یکتای یک ستون", auth: "read" },
+      random: { method: "GET", path: "/debug/random/:table", desc: "رکوردهای تصادفی", auth: "read" },
+      recent: { method: "GET", path: "/debug/recent/:table", desc: "رکوردهای اخیر", auth: "read" }
+    } },
+    queries: { icon: "🔄", endpoints: {
+      execute: { method: "POST", path: "/debug/query", desc: "اجرای SQL دلخواه", auth: "admin" },
+      prepared: { method: "POST", path: "/debug/query/prepared", desc: "کوئری آماده", auth: "admin" },
+      explain: { method: "POST", path: "/debug/explain", desc: "نمایش طرح اجرا", auth: "admin" },
+      analyze: { method: "POST", path: "/debug/explain/analyze", desc: "اجرا و تحلیل واقعی", auth: "admin" },
+      history: { method: "GET", path: "/debug/query/history", desc: "تاریخچه کوئری‌ها", auth: "admin" },
+      historyClear: { method: "POST", path: "/debug/query/history/clear", desc: "پاک کردن تاریخچه", auth: "super" },
+      saved: { method: "GET", path: "/debug/query/saved", desc: "کوئری‌های ذخیره شده", auth: "admin" },
+      savedCreate: { method: "POST", path: "/debug/query/saved", desc: "ذخیره کوئری", auth: "admin" },
+      savedDelete: { method: "DELETE", path: "/debug/query/saved/:id", desc: "حذف کوئری ذخیره شده", auth: "admin" },
+      validate: { method: "POST", path: "/debug/query/validate", desc: "اعتبارسنجی SQL", auth: "admin" },
+      format: { method: "POST", path: "/debug/query/format", desc: "فرمت‌بندی SQL", auth: "admin" },
+      running: { method: "GET", path: "/debug/query/running", desc: "کوئری‌های در حال اجرا", auth: "admin" },
+      kill: { method: "DELETE", path: "/debug/query/kill/:pid", desc: "کشتن پردازش", auth: "super" }
+    } },
+    backup: { icon: "💾", endpoints: {
+      list: { method: "GET", path: "/debug/backups", desc: "لیست پشتیبان‌گیری‌ها", auth: "admin" },
+      create: { method: "GET", path: "/debug/backup", desc: "ایجاد پشتیبان فوری", auth: "admin" },
+      download: { method: "GET", path: "/debug/backup/:id/download", desc: "دانلود فایل پشتیبان", auth: "admin" },
+      restore: { method: "POST", path: "/debug/restore", desc: "بازگردانی از پشتیبان", auth: "super" },
+      restorePoint: { method: "POST", path: "/debug/restore/point", desc: "بازگردانی به نقطه خاص", auth: "super" },
+      schedule: { method: "GET", path: "/debug/backup/schedule", desc: "مشاهده زمان‌بندی", auth: "admin" },
+      scheduleSet: { method: "POST", path: "/debug/backup/schedule", desc: "تنظیم زمان‌بندی", auth: "admin" },
+      delete: { method: "DELETE", path: "/debug/backup/:id", desc: "حذف پشتیبان قدیمی", auth: "admin" },
+      verify: { method: "POST", path: "/debug/backup/:id/verify", desc: "بررسی سلامت پشتیبان", auth: "admin" }
+    } },
+    tools: { icon: "⚡", endpoints: {
+      health: { method: "GET", path: "/debug/health", desc: "بررسی سلامت کلی", auth: "public" },
+      test: { method: "GET", path: "/debug/test", desc: "تست اتصال", auth: "public" },
+      ping: { method: "GET", path: "/debug/ping", desc: "پینگ دیتابیس", auth: "public" },
+      version: { method: "GET", path: "/debug/version", desc: "نسخه دیتابیس", auth: "public" },
+      config: { method: "GET", path: "/debug/config", desc: "تنظیمات فعلی", auth: "admin" },
+      vacuum: { method: "POST", path: "/debug/vacuum", desc: "بهینه‌سازی (VACUUM)", auth: "super" },
+      vacuumTable: { method: "POST", path: "/debug/vacuum/:table", desc: "VACUUM یک جدول", auth: "super" },
+      analyze: { method: "POST", path: "/debug/analyze", desc: "ANALYZE", auth: "super" },
+      reindex: { method: "POST", path: "/debug/reindex", desc: "بازسازی همه ایندکس‌ها", auth: "super" },
+      cacheClear: { method: "POST", path: "/debug/cache/clear", desc: "پاک کردن query cache", auth: "super" },
+      diagnose: { method: "GET", path: "/debug/diagnose", desc: "تشخیص مشکلات", auth: "admin" },
+      recommend: { method: "GET", path: "/debug/recommend", desc: "پیشنهادات بهینه‌سازی", auth: "admin" }
+    } },
+    admin: { icon: "🎛️", endpoints: {
+      status: { method: "GET", path: "/debug/admin/status", desc: "وضعیت کلی سرور", auth: "admin" },
+      reload: { method: "POST", path: "/debug/admin/reload", desc: "بارگذاری مجدد تنظیمات", auth: "super" },
+      restart: { method: "POST", path: "/debug/admin/restart", desc: "ری‌استارت سرور", auth: "super" },
+      shutdown: { method: "POST", path: "/debug/admin/shutdown", desc: "خاموش کردن سرور", auth: "super" },
+      memory: { method: "GET", path: "/debug/admin/memory", desc: "مصرف حافظه فرآیند", auth: "admin" },
+      cpu: { method: "GET", path: "/debug/admin/cpu", desc: "مصرف CPU", auth: "admin" },
+      uptime: { method: "GET", path: "/debug/admin/uptime", desc: "زمان کارکرد سرور", auth: "public" },
+      metrics: { method: "GET", path: "/debug/admin/metrics", desc: "Metrics برای Prometheus", auth: "public" }
+    } }
+  };
+
+  // جمع‌آوری تمام اندپوینت‌ها
+  let allEndpoints = [];
+  for (let [cat, val] of Object.entries(API_DATA)) {
+    for (let [name, ep] of Object.entries(val.endpoints)) {
+      allEndpoints.push({ category: cat, icon: val.icon, name, ...ep });
+    }
+  }
+
+  // رندر اولیه و جستجو
+  function render(filterText = "") {
+    const grid = document.getElementById("apiGrid");
+    grid.innerHTML = "";
+    let totalAuth = 0;
+    const filtered = allEndpoints.filter(ep => 
+      ep.path.toLowerCase().includes(filterText) || 
+      ep.method.toLowerCase().includes(filterText) ||
+      ep.desc.toLowerCase().includes(filterText)
+    );
+
+    const grouped = {};
+    for (let ep of filtered) {
+      if (!grouped[ep.category]) grouped[ep.category] = { icon: ep.icon, endpoints: [] };
+      grouped[ep.category].endpoints.push(ep);
+      if (ep.auth !== 'public') totalAuth++;
+    }
+
+    for (let [cat, data] of Object.entries(grouped)) {
+      const card = document.createElement("div");
+      card.className = "api-category";
+      card.innerHTML = `
+        <div class="category-header">
+          <span>${data.icon}</span> ${cat.toUpperCase()} <span style="font-size:0.7rem;">(${data.endpoints.length})</span>
+        </div>
+        <div class="endpoint-list" id="list-${cat}"></div>
+      `;
+      const listDiv = card.querySelector(`.endpoint-list`);
+      data.endpoints.forEach(ep => {
+        const epDiv = document.createElement("div");
+        epDiv.className = "endpoint-item";
+        epDiv.innerHTML = `
+          <span class="method ${ep.method.toLowerCase()}">${ep.method}</span>
+          <span class="path" title="کپی مسیر">${ep.path}</span>
+          <span class="desc">${ep.desc}</span>
+          <span class="auth">${ep.auth === 'public' ? '🌐 عمومی' : (ep.auth === 'admin' ? '🔐 ادمین' : '🛡️ ' + ep.auth)}</span>
+          <button class="copy-btn" data-path="${ep.path}">📋</button>
+        `;
+        listDiv.appendChild(epDiv);
+      });
+      grid.appendChild(card);
+    }
+
+    document.getElementById("totalEndpoints").innerText = filtered.length;
+    document.getElementById("totalCategories").innerText = Object.keys(grouped).length;
+    document.getElementById("totalAuth").innerHTML = `🔐 ${totalAuth}`;
+    document.getElementById("apiStatus").innerHTML = "✅ زنده";
+    
+    // attach copy event
+    document.querySelectorAll(".copy-btn").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const path = btn.getAttribute("data-path");
+        navigator.clipboard.writeText(path);
+        showToast(`📋 مسیر کپی شد: ${path}`);
+      });
+    });
+  }
+
+  function showToast(msg) {
+    let toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerText = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  }
+
+  const searchInput = document.getElementById("searchInput");
+  searchInput.addEventListener("input", (e) => render(e.target.value.toLowerCase()));
+  render("");
+</script>
+</body>
+</html>

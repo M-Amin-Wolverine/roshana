@@ -1,0 +1,155 @@
+// databaseMonitor.js - سیستم پایش و مدیریت اتصال دیتابیس پیشرفته
+
+const logger = require('./middleware/logger');
+
+class DatabaseMonitor {
+  constructor(db, options = {}) {
+    this.db = db;
+    this.interval = options.interval || 30000;       // هر 30 ثانیه
+    this.maxReconnectAttempts = options.maxReconnectAttempts || 5;
+    this.backoff = {
+      min: options.backoffMin || 2000,    // 2 ثانیه
+      max: options.backoffMax || 60000    // 60 ثانیه
+    };
+    this.enableStats = options.enableStats !== false;
+    
+    // وضعیت‌ها
+    this.status = {
+      connected: false,
+      lastPingSuccessAt: null,
+      lastPingFailureAt: null,
+      consecutiveFailures: 0,
+      reconnectAttempts: 0,
+      totalPings: 0,
+      totalFailures: 0,
+      avgResponseTime: 0,
+      lastError: null
+    };
+    
+    this.pingTimer = null;
+    this.isReconnecting = false;
+  }
+
+  // شروع پینگ زدن
+  start() {
+    if (this.pingTimer) clearInterval(this.pingTimer);
+    // بلافاصله یک بار پینگ بزن
+    this.ping();
+    // سپس هر ۳۰ ثانیه تکرار کن
+    this.pingTimer = setInterval(() => this.ping(), this.interval);
+    logger.info('🔁 Database monitor started');
+  }
+  // توقف پینگ زدن
+  stop() {
+    if (this.pingTimer) clearInterval(this.pingTimer);
+    this.pingTimer = null;
+    logger.info('⏹️ Database monitor stopped');
+  }
+
+  // یک بار پینگ
+  async ping() {
+    if (this.isReconnecting) return;
+
+    const start = Date.now();
+    try {
+      await this.db.raw('SELECT 1');
+      const duration = Date.now() - start;
+
+      // بروزرسانی آمار
+      this.status.connected = true;
+      this.status.lastPingSuccessAt = new Date().toISOString();
+      this.status.consecutiveFailures = 0;
+      this.status.reconnectAttempts = 0;
+      this.status.totalPings++;
+      
+      // میانگین متحرک پاسخگویی (اختیاری)
+      if (this.enableStats) {
+        this.status.avgResponseTime = Math.round(
+          (this.status.avgResponseTime * (this.status.totalPings - 1) + duration) / this.status.totalPings
+        );
+      }
+      
+      logger.debug(`✅ Database ping successful (${duration}ms)`);
+    } catch (err) {
+      this.status.connected = false;
+      this.status.lastPingFailureAt = new Date().toISOString();
+      this.status.consecutiveFailures++;
+      this.status.totalFailures++;
+      this.status.lastError = err.message;
+      
+      logger.error(`❌ Database ping failed (attempt ${this.status.consecutiveFailures}): ${err.message}`);
+      
+      // شروع reconnect
+      this.attemptReconnect();
+    }
+  }
+
+  // تلاش برای reconnect با backoff
+  async attemptReconnect() {
+    if (this.isReconnecting) return;
+    this.isReconnecting = true;
+
+    const delay = this.calculateBackoffDelay();
+    logger.warn(`🔄 Scheduling reconnect in ${delay}ms (attempt ${this.status.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
+    
+    await this.sleep(delay);
+    
+    try {
+      logger.info('🔌 Attempting to reconnect to database...');
+      // بستن اتصال قدیمی (اگر هست)
+      try { await this.db.destroy(); } catch(e) {}
+      
+      // ایجاد اتصال جدید (نیاز به کانفیگ جدید داری – می‌تونی از متغیر global یا بازخوانی فایل استفاده کنی)
+      // فرض می‌کنیم کانفیگ از بیرون داده شده. ساده‌ترین راه: دوباره از knexfile استفاده کن
+      const knex = require('knex');
+      const knexConfig = require('./knexfile');
+      const newDb = knex(knexConfig[process.env.NODE_ENV || 'development']);
+      await newDb.raw('SELECT 1');
+      
+      // جایگزینی db در global و در monitor
+      this.db = newDb;
+      global.db = newDb;
+      
+      this.status.connected = true;
+      this.status.consecutiveFailures = 0;
+      this.status.reconnectAttempts = 0;
+      this.status.lastPingSuccessAt = new Date().toISOString();
+      logger.info('✅ Successfully reconnected to database');
+    } catch (reconnectErr) {
+      this.status.reconnectAttempts++;
+      logger.error(`❌ Reconnect failed (${this.status.reconnectAttempts}/${this.maxReconnectAttempts}): ${reconnectErr.message}`);
+      
+      if (this.status.reconnectAttempts >= this.maxReconnectAttempts) {
+        logger.error('💀 Max reconnect attempts reached. Exiting process.');
+        process.exit(1);
+      } else {
+        // دوباره تلاش کن (بازگشت به حلقه)
+        this.isReconnecting = false;
+        this.attemptReconnect();
+        return;
+      }
+    }
+    
+    this.isReconnecting = false;
+  }
+
+  // محاسبه فاصله زمانی با backoff و jitter
+  calculateBackoffDelay() {
+    let delay = this.backoff.min * Math.pow(2, this.status.reconnectAttempts);
+    if (delay > this.backoff.max) delay = this.backoff.max;
+    // اضافه کردن jitter تصادفی (0 تا 20%)
+    const jitter = delay * (Math.random() * 0.2);
+    return Math.floor(delay + jitter);
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // گرفتن وضعیت فعلی (برای endpoint)
+  getStatus() {
+    return { ...this.status, uptime: process.uptime() };
+  }
+}
+
+module.exports = DatabaseMonitor;
